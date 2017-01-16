@@ -240,7 +240,7 @@ cSimulationSpot =
 	Compile[{{fc, _Real, 1}, {termVol, _Real, 1}, {rvs, _Real, 2}}, Exp[Log[fc]- 1/2 termVol^2 + termVol #] & /@ rvs,
 	CompilationTarget->"C"];
 
-$eps = 0.0025;
+$eps = 0.0005;
 
 (*sdd[x_, \[Epsilon]_] = PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];*)
 
@@ -252,28 +252,26 @@ stheta[x_, \[Epsilon]_] = CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 (*sm[x_, 0] /; Dimensions[x]=={} := Max[x, 0];
 sm[x_, 0] /; Dimensions[x]!={} := MapThread[Max[#1, #2]&, {x, ConstantArray[0, Dimensions[x]]}, Length[Dimensions[x]]];*)
 (* TODO: any clean way to do this ? *)
-sm[0, eps_] := 0;
-sm[x_, 0] := x HeavisideTheta[x];
-sm[x_, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
-
-
+sm[0, eps_] = 0;
+sm[x_, 0] = x HeavisideTheta[x];
+sm[x_, \[Epsilon]_] = 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* TODO: Remove *)
-(*smp[x_, \[Epsilon]_] = Derivative[1, 0][sm][x, \[Epsilon]];*)
+smp[x_, \[Epsilon]_] = 1/2 Erfc[-(x / (2 Sqrt[\[Epsilon]]))];
 
 (*vf[x_, y_, z_] := Piecewise[{{y + sm[x-y, 0.0025], x > y}, {z, x <= y}}];*)
 (*vf[x_, y_, z_] := (y + sm[x-y, $eps]) Boole[x - y] + z Boole[x <= y];*)
 (*vf[x_, y_, z_] := (y + sm[x - y, $eps]) stheta[x - y, $eps] + z stheta[y - x, $eps];*)
 
-payoffBermudan[s_, strike_] = sm[s - strike, $eps];
+payoffBermudan[s_, strike_] := sm[s - strike, $eps];
 payoffBermudanPrime[s_ /; Dimensions[s]=={}, strike_] := 
 	Which[s - strike == 0, 0, 
 		  $eps == 0, HeavisideTheta[s - strike], 
-		  True, Derivative[1, 0][sm][s - strike, $eps]];
+		  True, smp[s - strike, $eps]];
 payoffBermudanPrime[s_ /; Head[s]==ad, strike_] := 
 	Which[s - strike == 0, 0, 
 		  $eps == 0, HeavisideTheta[s - strike], 
-		  True, Derivative[1, 0][sm][s - strike, $eps]];
+		  True, smp[s - strike, $eps]];
 payoffBermudanPrime[s_, strike_] := MapThread[payoffBermudanPrime[#1, #2] &, {s - strike, ConstantArray[0, Dimensions[s]]}, Length[Dimensions[s]]];
 
 numeraire[ir_, t_] := Exp[ir t];
@@ -504,8 +502,8 @@ backwardLoopValues[exerciseValue_, numeraire_, phi_] :=
 
         (* Updating the values *)
         (* Longstaff-Schwartz *)
-        aux = Boole[Thread[exerciseValue[[day, All]] - h > 0]];
-        (*aux = stheta[exerciseValue[[day, All]] - h, $eps];*)
+        (*aux = Boole[Thread[exerciseValue[[day, All]] - h > 0]];*)
+        aux = stheta[exerciseValue[[day, All]] - h, $eps];
         valuesFinal = exerciseValue[[day, All]] aux + numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal (1 - aux); (* nMC *)
 
         (* Simple *)
@@ -548,8 +546,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
             eBar[[day]] += vBar[[day]] MapThread[Derivative[1, 0, 0][vf][#1, #2, 0] &, {exerciseValue[[day, All]], outHoldValue[[day, All]]}];*)
 
         (* Longstaff-Schwartz - Manual *)
-        aux = Boole[Thread[exerciseValue[[day, All]] > outHoldValue[[day, All]]]];
-        (*aux = stheta[exerciseValue[[day, All]] - outHoldValue[[day, All]], $eps];*)
+        (*aux = Boole[Thread[exerciseValue[[day, All]] > outHoldValue[[day, All]]]];*)
+        aux = stheta[exerciseValue[[day, All]] - outHoldValue[[day, All]], $eps];
         vBar[[day + 1]] += vBar[[day]] numeraire[[day, All]] / numeraire[[day + 1, All]] (1 - aux);
         eBar[[day]] += vBar[[day]] aux;
 
@@ -581,8 +579,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
         aux = aBar[[day]] aux;
         aux = seqsum /@ Transpose[Flatten[aux, 1]];
         xBar[[day]] += aux;
-        xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];
-        (*xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];*)
+        (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
+        xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
         fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
         volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
         day = day + 1
@@ -593,8 +591,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
         eBar[[day]] += vBar[[day]] MapThread[Derivative[1, 0, 0][vf][#1, #2, 0] &, {exerciseValue[[day, All]], outHoldValue[[day, All]]}];*)
 
       (* Longstaff-Schwartz - Manual *)
-      aux = Boole[Thread[exerciseValue[[day, All]] > outHoldValue[[day, All]]]];
-      (*aux = stheta[exerciseValue[[day, All]] - outHoldValue[[day, All]], $eps];*)
+      (*aux = Boole[Thread[exerciseValue[[day, All]] > outHoldValue[[day, All]]]];*)
+      aux = stheta[exerciseValue[[day, All]] - outHoldValue[[day, All]], $eps];
       eBar[[day]] += vBar[[day]] aux;
 
       (* Simple - Manual *)
@@ -602,8 +600,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
         eBar[[day]] += vBar[[day]] aux;
         hBar[[day]] += vBar[[day]] (1 - aux);*)
 
-      xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];
-      (*xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];*)
+      (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
+      xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
       fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
       volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
 
