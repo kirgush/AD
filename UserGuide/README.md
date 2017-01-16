@@ -51,3 +51,5 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - ~~Wrong intrinsic value~~ ? FIXED
   - Bad match between `ad` and `manual` when using modified payoff
   - Need to define derivative of modified payoff in order to catch singularities: introduce a third argument/flag ?
+
+    - Can one define the derivatives ? 
