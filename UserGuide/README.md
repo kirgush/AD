@@ -30,7 +30,6 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
     - Requirements on curve simulators and payoffs
 
 
-
 # Issues
 
   - Look into poor performance on larger lists.
@@ -47,9 +46,12 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
 # Bugs
 
-  - Simple value update, no inverse => sensitivities not matching
+  - ~~Simple value update, no inverse => sensitivities not matching.~~ FIXED
   - ~~Wrong intrinsic value~~ ? FIXED
-  - Bad match between `ad` and `manual` when using modified payoff
-  - Need to define derivative of modified payoff in order to catch singularities: introduce a third argument/flag ?
+  - Bad match between `ad` and `manual` when using modified payoff.
+  - Need to define derivative of modified payoff in order to catch singularities: ~~introduce a third argument/flag~~ ? Used alternative approach.
 
-    - Can one define the derivatives ? 
+    - ~~Can one define the derivatives~~ ? Used alternative approach.
+
+  - Double check `stheta` at 0 in $\Theta(\mu - 1)$ and $\Theta(\mu - m)$.
+  - Need the values on the forward loop as well ?

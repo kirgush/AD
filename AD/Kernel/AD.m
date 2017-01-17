@@ -13,7 +13,7 @@ makePartial::usage=""
 propagatead::usage=""
 ad::usage=""
 toValue::usage=""
-seqsum::usage="Recursive total to overcome slowness of built-in Total.
+seqsum::usage="Recursive total to overcome slowness of built-in Total on `ad` objects.
   Example:
 
   seqsum[{ad[-23.7517,<|vol->-1.57748,fc->-1.02938|>],
@@ -26,7 +26,8 @@ seqsum::usage="Recursive total to overcome slowness of built-in Total.
           ad[-23.2646,<|vol->-0.474541,fc->-1.00912|>],
           ad[-23.8558,<|vol->-1.81582,fc->-1.03371|>],
           ad[-23.9182,<|vol->-1.95914,fc->-1.0363|>]}]
-"
+";
+seqsum::usage="Recursive total to overcome slowness of built-in Product on `ad` objects.";
 recursiveStatistics::usage=""
 
 simulationSpot::usage="simulationSpot[fc, termVol, rvs] returns simulations of spot prices;
@@ -212,7 +213,16 @@ seqsum[arg_List] :=
         counter++
       ];
       output
-    ]
+    ];
+
+seqprod[arg_List] :=
+    Module[{counter = 1, len = Length[arg], output = arg[[1]]},
+      While[counter < len,
+        output *= arg[[counter + 1]];
+        counter++
+      ];
+      output
+    ];
 
 recursiveStatistics[x_List] := Module[
 	{out, out2, length=Length[x], counter=2},
@@ -609,13 +619,109 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
 
     ];
 
+forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPrime_, spot_, strike_, exerciseDates_, forward_, terminalvols_, rvs_] :=
+    Module[{nB, nMC, nE, notExercised, contValue, cashflow, aux},
 
-(*forwardLoopValues[exerciseValue_, numeraire_, holdValues_] :=*)
-    (*Module[{},*)
+      cashflow = ConstantArray[0, {nE, nMC}];
+      notExercised = ConstantArray[0, {nE, nMC}];
+      contValue = ConstantArray[0, {nE - 1, nMC}];
+      value = ConstantArray[0, {nE, nMC}];
+
+      cashflowBar = ConstantArray[1 / nMC, nMC];
+      betaBar = Table[0, {m, nE - 1}, {i, nB}];
+      aBar = Table[0, {m, nE - 1}, {i, nB}, {j, nB}];
+      bBar = Table[0, {m, nE - 1}, {i, nB}];
+      xBar = Table[0, {m, nE}, {n, nMC}];
+      eBar = Table[0, {m, nE}, {n, nMC}];
+      hBar = Table[0, {m, nE}, {n, nMC}];
+      vBar = Table[0, {m, nE}, {n, nMC}];
+      fcBar = Table[0, {m, nE}];
+      volBar = Table[0, {m, nE}];
 
 
+      vBar[[1]] = ConstantArray[1, nMC];
 
-    (*]*)
+      contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi, {3, 2, 1}][[1 ;; -2]]}]; (* nE-1 x nMC *)
+
+      notExercised[[1]] = ConstantArray[1, nMC];
+
+      day = 1;
+      While[day <= nE - 1,
+      (*contValue[[day]] = seqsum[beta[[day]] #] & /@ Transpose[phi[[day]]]; *)(* nMC *)
+        notExercised[[day + 1]] = notExercised[[day]] * stheta[contValue[[day]] - exerciseValue[[day]], $eps];
+        cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]] - contValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
+        day = day + 1;
+
+      ];
+
+      (* day = nE *)
+      cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
+
+      (* d_notExercised / d_exerciseValue *)
+      d_n_d_E =
+          Table[-stheta[day - 1, $eps] * stheta[day - m, $eps] * sdd[contValue[[m]] - exerciseValue[[m]], $eps] *
+              seqprod[stheta[contValue[[Drop[Range[1, day - 1], {m}]]] - exerciseValue[[Drop[Range[1, day - 1], {m}]]], $eps]],
+            {day, 1, nE}, {m, 1, nE}]; (* nE \mu x nE m *)
+
+      value = seqsum[cashflow] / nMC;
+
+      day = 1;
+      While[day <= nE,
+
+        aux = seqsum[d_n_d_E[[#]] * stheta[exerciseValue[[#]] - contValue[[#]], $eps] * exerciseValue[[#]] / numeraire[[#]]
+            & /@ Range[day + 1, nE]] + notExercised[[day]] *
+            sdd[exerciseValue[[day]] - contValue[[day]], $eps] exerciseValue[[day]] / numeraire[[day]];
+
+        (*aux =*)
+        (*seqsum[d_n_d_E[[#]] * stheta[exerciseValue[[#]] - contValue[[#]], $eps] * exerciseValue[[#]] / numeraire[[#]]*)
+        (*& /@ Range[day + 1, nE]] +*)
+        (*notExercised[[day]] / numeraire[[day]] **)
+        (*(sdd[exerciseValue[[day]] - contValue[[day]], $eps] * exerciseValue[[day]] +*)
+        (*stheta[exerciseValue[[day]] - contValue[[day]], $eps]);*)
+
+        eBar[[day]] = cashflowBar[[day]] (aux + notExercised[[day]] / numeraire[[day]] *
+            stheta[exerciseValue[[day]] - contValue[[day]], $eps]);
+
+        hBar[[day]] = cashflowBar[[day]] (-aux);
+
+        day = day + 1;
+      ];
+
+
+      xBar += eBar payoffBermudanPrime[spot, strike];
+
+      betaBar = MapThread[seqsum[#1 #2] &, {hBar[[1 ;; -2]], Transpose[phi, {3, 2, 1}][[1 ;; nE - 1]]}]; (* nE-1 xn nB *)
+
+      xBar += hBar MapThread[seqsum[#1 #2] &, {beta, Transpose[phiPrime, {3, 2, 1}][[1 ;; nE - 1]]}];
+
+      Amat = Transpose[Outer[seqsum[#1 #2]&, phi[[All, All, 1 ;; nE - 1]], phi[[All, All, 1 ;; nE - 1]], 1, 1], {2, 3, 1}]; (* nE-1 x nB x nB *)
+
+      bBar = LinearSolve[Sequence @@ #] & /@ Transpose[{Amat, betaBar}];
+
+      aBar = -Outer[#1 #2 &, bBar, beta];
+
+      vBar = (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Tranpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
+          numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]];
+
+      (*value = MapThread[sm[#1 - #2, $eps] &, {exerciseValue, contValue}, {2}];*)
+      value = contValue + sm[exerciseValue - contValue, $eps];
+
+      xBar[[1;;nE-1]] += (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Tranpose[phiPrime[[All, All, 1;;nE - 1]], {2, 3, 1}]}]) *
+
+          numeraire[[1;;nE - 1]] / numeraire[[2;;nE]] * value[[2;;nE]];
+
+      xBar += (seqsum[#] & /@
+          Transpose@
+              Flatten[(Amat #[[;; , ;; , All]] & /@ Transpose[Outer[#1 #2 &, phi, phiPrime, 1, 1], {2, 3, 4, 1}]) , {2, 3}] );
+
+      fcBar = seqsum[#] & /@ (xBar Transpose[spot] / forward);
+
+      volBar = -terminalvols exerciseDates (seqsum[#] & /@ (xBar Transpose[spot])) +
+          Sqrt[exerciseDates] (seqsum[#] & /@ (xBar Transpose[spot rvs]));
+
+    ];
+
+
 
 
 regressionCoefficientAndSensitivityBothLoops[exerciseDates_, forward_, vols_, ir_, rvs_, strike_, basisFunctions_] :=
