@@ -55,3 +55,4 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
   - Double check `stheta` at 0 in $\Theta(\mu - 1)$ and $\Theta(\mu - m)$.
   - Need the values on the forward loop as well ? Yes.
+  - Wrong `dndE`.

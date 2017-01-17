@@ -624,6 +624,8 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
     Module[{nB, nMC, nE, notExercised, contValue, cashflow, value,
       cashflowBar, betaBar, aBar, bBar, xBar, eBar, hBar, vBar, fcBar, volBar, Amat, Bvec, day, aux, dndE, betaFwd},
 
+	  {nB, nMC, nE} = Dimensions[phi];
+
       cashflow = ConstantArray[0, {nE, nMC}];
       notExercised = ConstantArray[0, {nE, nMC}];
       contValue = ConstantArray[0, {nE - 1, nMC}];
@@ -643,10 +645,12 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       vBar[[1]] = ConstantArray[1, nMC];
 
-      contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi, {3, 2, 1}][[1 ;; -2]]}]; (* nE-1 x nMC *)
+      (*contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi, {3, 2, 1}][[1 ;; -2]]}];*) (* nE-1 x nMC *)
+      contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi[[All, All, 1;;nE-1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
 
       notExercised[[1]] = ConstantArray[1, nMC];
 
+	  (* TODO: first calculate all days, then multiply ? *)
       day = 1;
       While[day <= nE - 1,
       (*contValue[[day]] = seqsum[beta[[day]] #] & /@ Transpose[phi[[day]]]; *)(* nMC *)
@@ -660,10 +664,12 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
 
       (* d_notExercised / d_exerciseValue *)
+      dndE = ConstantArray[0, {nE, nE}];
+      dndE[[1]] = ConstantArray[0, nE];
       dndE =
           Table[-stheta[day - 1, $eps] * stheta[day - m, $eps] * sdd[contValue[[m]] - exerciseValue[[m]], $eps] *
               seqprod[stheta[contValue[[Drop[Range[1, day - 1], {m}]]] - exerciseValue[[Drop[Range[1, day - 1], {m}]]], $eps]],
-            {day, 1, nE}, {m, 1, nE}]; (* nE \mu x nE m *)
+            {day, 2, nE}, {m, 1, day - 1}]; (* nE \mu x nE m *)
 
       value = seqsum[cashflow] / nMC;
 
@@ -702,7 +708,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       aBar = -Outer[#1 #2 &, bBar, beta];
 
-      vBar = (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Tranpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
+      vBar = (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
           numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]];
 
       (*value = MapThread[sm[#1 - #2, $eps] &, {exerciseValue, contValue}, {2}];*)
@@ -712,7 +718,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       betaFwd = LinearSolve[Amat, Bvec];
 
-      xBar[[1;;nE-1]] += (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Tranpose[phiPrime[[All, All, 1;;nE - 1]], {2, 3, 1}]}]) *
+      xBar[[1;;nE-1]] += (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phiPrime[[All, All, 1;;nE - 1]], {2, 3, 1}]}]) *
 
           numeraire[[1;;nE - 1]] / numeraire[[2;;nE]] * value[[2;;nE]];
 
@@ -778,7 +784,7 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
       outAFwd, outBFwd, outBetaFwd, outValueFwd, outHoldValueFwd, eBarFwd, hBarFwd, vBarFwd, xBarFwd, fcBarFwd, volBarFwd,
       elapsedStart, elapsedEnd, elapsedBkwd, elapsedFwd},
 
-      {nMC, nE} = Dimensions[rvs];
+      {nMC, nE} = Dimensions[rvsBkwd];
       If[ nE == 1,
         {{{}}, {valuesFinal}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}}, (* TODO: update *)
 
