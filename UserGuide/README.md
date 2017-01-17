@@ -54,4 +54,4 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
     - ~~Can one define the derivatives~~ ? Used alternative approach.
 
   - Double check `stheta` at 0 in $\Theta(\mu - 1)$ and $\Theta(\mu - m)$.
-  - Need the values on the forward loop as well ?
+  - Need the values on the forward loop as well ? Yes.
