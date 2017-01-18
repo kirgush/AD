@@ -27,7 +27,7 @@ seqsum::usage="Recursive total to overcome slowness of built-in Total on `ad` ob
           ad[-23.8558,<|vol->-1.81582,fc->-1.03371|>],
           ad[-23.9182,<|vol->-1.95914,fc->-1.0363|>]}]
 ";
-seqsum::usage="Recursive total to overcome slowness of built-in Product on `ad` objects.";
+seqprod::usage="Recursive total to overcome slowness of built-in Product on `ad` objects.";
 recursiveStatistics::usage=""
 
 simulationSpot::usage="simulationSpot[fc, termVol, rvs] returns simulations of spot prices;
@@ -253,7 +253,7 @@ cSimulationSpot =
 
 $eps = 0.0005;
 
-(*sdd[x_, \[Epsilon]_] = PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];*)
+sdd[x_, \[Epsilon]_] = PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 stheta[0, 0] = 0;
 stheta[x_, 0] = HeavisideTheta[x];
@@ -664,15 +664,19 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
 
       (* d_notExercised / d_exerciseValue *)
-      dndE = ConstantArray[0, {nE, nE}];
-      dndE[[1]] = ConstantArray[0, nE];
+      (*dndE = ConstantArray[0, {nE, nE}];*)
+      (*dndE[[1]] = ConstantArray[0, nE];*)
       dndE =
-          Table[-stheta[day - 1, $eps] * stheta[day - m, $eps] * sdd[contValue[[m]] - exerciseValue[[m]], $eps] *
-              seqprod[stheta[contValue[[Drop[Range[1, day - 1], {m}]]] - exerciseValue[[Drop[Range[1, day - 1], {m}]]], $eps]],
-            {day, 2, nE}, {m, 1, day - 1}]; (* nE \mu x nE m *)
+          Table[
+          	Which[day == 1 || m >= day, ConstantArray[0, nMC], 
+          		  day == 2, -sdd[contValue[[1]] - exerciseValue[[1]], $eps],
+          		  True,-sdd[contValue[[m]] - exerciseValue[[m]], $eps] *
+              seqprod[stheta[contValue[[Drop[Range[1, day - 1], {m}]]] - exerciseValue[[Drop[Range[1, day - 1], {m}]]], $eps]]],
+            {day, 1, nE}, {m, 1, nE}]; (* nE \mu x nE m x nMC *)
 
       value = seqsum[cashflow] / nMC;
 
+	  (* TODO: this is wrong *)
       day = 1;
       While[day <= nE,
 
@@ -778,26 +782,57 @@ regressionCoefficientAndSensitivityBothLoops[exerciseDates_, forward_, vols_, ir
       ]
     ];
 
+(* exerciseDates as differences to valuation date in years *)
+(* Same number of sims for backward and forward loops *)
 regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_, ir_, rvsBkwd_, rvsFwd_, strike_, basisFunctions_] :=
     Module[ {nE, nB, nMC, terminalvols, spotBkwd, spotFwd, numeraire, exerciseValue, valuesFinal, basisFunctionsPrime, phi, phiPrime,
       outABkwd, outBBkwd, outBetaBkwd, outValueBkwd, outHoldValueBkwd, eBarBkwd, hBarBkwd, vBarBkwd, xBarBkwd, fcBarBkwd, volBarBkwd,
       outAFwd, outBFwd, outBetaFwd, outValueFwd, outHoldValueFwd, eBarFwd, hBarFwd, vBarFwd, xBarFwd, fcBarFwd, volBarFwd,
       elapsedStart, elapsedEnd, elapsedBkwd, elapsedFwd},
 
-      {nMC, nE} = Dimensions[rvsBkwd];
+      nE = Dimensions[rvsBkwd][[2]];
+      terminalvols = vols Sqrt[exerciseDates]; (* nE *)
+
       If[ nE == 1,
-        {{{}}, {valuesFinal}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}, {{}}}, (* TODO: update *)
 
-      (* spot simulations *)
-      (* exerciseDates as differences to valuation date in years *)
-        terminalvols = vols Sqrt[exerciseDates]; (* nE *)
+        elapsedStart = DateObject[];
+        (* Backward loop: setup*)
+        spotBkwd = simulationSpot[forward, terminalvols, rvsBkwd];  (*nMC x nE*)
+        exerciseValue = payoffBermudan[Transpose[spotBkwd], strike];  (*nE x nMC*)
 
+        (*  Backward loop: values *)
+        {outABkwd, outBBkwd, outBetaBkwd, outHoldValueBkwd, outValueBkwd} = {{}, {}, {}, {}, exerciseValue[[-1]]};
 
+        (* Backward loop: sensitivities *)
+        {fcBarBkwd, volBarBkwd, vBarBkwd, hBarBkwd, eBarBkwd, xBarBkwd, spotBkwd} = {{}, {}, {}, {}, {}, {}, spotBkwd};
+        elapsedEnd = DateObject[];
+        elapsedBkwd = QuantityMagnitude[DateDifference[elapsedStart, elapsedEnd, "Minute"]];
+
+        elapsedStart = DateObject[];
+        (* Forward loop: setup *)
+        spotFwd = simulationSpot[forward, terminalvols, rvsFwd]; (* nMC x nE *)
+        exerciseValue = payoffBermudan[Transpose[spotFwd], strike]; (* nE x nMC *)
+
+        (* Forward loop: values and sensitivities *)
+        {outBetaFwd, outHoldValueFwd, outValueFwd, fcBarFwd, volBarFwd, vBarFwd, hBarFwd, eBarFwd, xBarFwd, spotFwd} =
+            {{}, {}, exerciseValue[[-1]], {}, {}, {}, {}, {}, {}, spotFwd};
+        elapsedEnd = DateObject[];
+        elapsedFwd = QuantityMagnitude[DateDifference[elapsedStart, elapsedEnd, "Minute"]];
+
+        (* Output *)
+        Association[{"fcBarBkwd"->fcBarBkwd, "volBarBkwd"->volBarBkwd, "outBetaBkwd"->outBetaBkwd,
+          "outHoldValueBkwd"->outHoldValueBkwd, "outValueBkwd"->outValueBkwd,
+          "outBetaFwd"->outBetaFwd, "outHoldValueFwd"->outHoldValueFwd, "outValueFwd"->outValueFwd,
+          "fcBarFwd"->fcBarFwd,"volBarFwd"->volBarFwd, "spotBkwd"->spotBkwd, "spotFwd"->spotFwd,
+          "elapsedBkwd"->elapsedBkwd, "elapsedFwd"->elapsedFwd}],
+
+        (* nE > 1 *)
         (* Left as a matrix to allow the ir to become a risk factor *)
-        numeraire = Transpose[Exp[ir * exerciseDates] & /@ Range[nMC]]; (* nE x nMC *)
 
-
+        {nMC, nE} = Dimensions[rvsBkwd];
         nB = Length[basisFunctions[1]]; (* TODO: Fix this *)
+
+        numeraire = Transpose[Exp[ir * exerciseDates] & /@ Range[nMC]]; (*nE x nMC*)
 
         (* FIXED: Assuming one factor *)
         (*basisFunctionsPrime = Function[x, Evaluate@Derivative[1][basisFunctions][x]];*)
@@ -805,12 +840,12 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
         basisFunctionsPrime = Function[x, {0 x , 1 x, 2 x, 3 x^2, 4 x^3}[[1 ;; nB]]];
 
         elapsedStart = DateObject[];
-        (* Backward loop: setup *)
-        spotBkwd = simulationSpot[forward, terminalvols, rvsBkwd]; (* nMC x nE *)
-        phi = basisFunctions[spotBkwd]; (* nB x nMC x nE *)
-        phiPrime = basisFunctionsPrime[spotBkwd]; (* nB x nMC x nE *)
-        exerciseValue = payoffBermudan[Transpose[spotBkwd], strike]; (* nE x nMC *)
-        (*valuesFinal = exerciseValue[[-1]];*)(* nMC *)
+        (* Backward loop: setup*)
+        spotBkwd = simulationSpot[forward, terminalvols, rvsBkwd];  (*nMC x nE*)
+        phi = basisFunctions[spotBkwd];  (*nB x nMC x nE*)
+        phiPrime = basisFunctionsPrime[spotBkwd];  (*nB x nMC x nE*)
+        exerciseValue = payoffBermudan[Transpose[spotBkwd], strike];  (*nE x nMC*)
+        (*valuesFinal = exerciseValue[[-1]];*) (*nMC*)
 
         (*  Backward loop: values *)
         {outABkwd, outBBkwd, outBetaBkwd, outHoldValueBkwd, outValueBkwd} = backwardLoopValues[exerciseValue, numeraire, phi];

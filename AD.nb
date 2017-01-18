@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    604083,      15521]
-NotebookOptionsPosition[    583916,      14910]
-NotebookOutlinePosition[    584262,      14925]
-CellTagsIndexPosition[    584219,      14922]
+NotebookDataLength[    590064,      15249]
+NotebookOptionsPosition[    570481,      14651]
+NotebookOutlinePosition[    570827,      14666]
+CellTagsIndexPosition[    570784,      14663]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -11589,7 +11589,7 @@ Cell[BoxData[{
  RowBox[{
   RowBox[{"nMC", "=", 
    RowBox[{"4", " ", 
-    RowBox[{"10", "^", "1"}]}]}], ";"}], "\[IndentingNewLine]", 
+    RowBox[{"10", "^", "0"}]}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"nB", "=", "5"}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
@@ -11989,10 +11989,11 @@ Cell[BoxData[{
    3.693547078944964*^9}, {3.6935471672197905`*^9, 3.6935471701470833`*^9}, {
    3.6935472420752754`*^9, 3.69354724712478*^9}, {3.6935512047915072`*^9, 
    3.6935512079428225`*^9}, 3.693551457530779*^9, {3.6936577549398327`*^9, 
-   3.6936577753878775`*^9}, {3.6936579046117983`*^9, 3.6936579059789352`*^9}}],
+   3.6936577753878775`*^9}, {3.6936579046117983`*^9, 3.6936579059789352`*^9}, 
+   3.693740437426504*^9}],
 
 Cell[BoxData[
- TemplateBox[{"0.00018335166666663127`","\"min\"","minutes","\"Minutes\""},
+ TemplateBox[{"0.00018335166666666087`","\"min\"","minutes","\"Minutes\""},
   "Quantity"]], "Output",
  CellChangeTimes->{
   3.6914786168049364`*^9, 3.6914792652397738`*^9, 3.691482321858405*^9, 
@@ -12054,10 +12055,12 @@ Cell[BoxData[
    3.6935470805491247`*^9, 3.6935471707111397`*^9, 3.693547249073975*^9, 
    3.693550362590296*^9, 3.6935512088429127`*^9, 3.693551458413867*^9, 
    3.693559743560299*^9, 3.693657837190057*^9, 3.693657907474085*^9, 
-   3.693658196538988*^9, 3.693658465652897*^9}]
+   3.693658196538988*^9, 3.693658465652897*^9, 3.693659082118537*^9, 
+   3.693724674567371*^9, 3.6937255898178864`*^9, 3.693726336057503*^9, 
+   3.6937265919690914`*^9, 3.69372668676457*^9, 3.6937393189146643`*^9, 
+   3.6937401639321575`*^9, {3.693740434546216*^9, 3.6937404388406453`*^9}, 
+   3.693740491854946*^9, 3.69374155320007*^9}]
 }, Open  ]],
-
-Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{
@@ -12070,285 +12073,23 @@ Cell[BoxData[
  CellChangeTimes->{{3.693657656642004*^9, 3.693657656647004*^9}, {
   3.693657812380576*^9, 3.6936578328366213`*^9}}],
 
+Cell[CellGroupData[{
+
 Cell[BoxData[
- TemplateBox[{
-  "JLink`Java","excptn",
-   "\"A Java exception occurred: \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"MathLinkException: 1100: Expression on link is \
-not a valid Java object reference\\\\\\\"\\\"}]\\).\"",2,31,6,
-   25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658946102937*^9}],
+ RowBox[{"Keys", "[", "output", "]"}]], "Input",
+ CellChangeTimes->{{3.6937401017399387`*^9, 3.693740113562121*^9}}],
 
 Cell[BoxData[
  TemplateBox[{
-  "Thread","tdlen",
-   "\"Objects of unequal length in \\!\\(\\*RowBox[{RowBox[{\\\"{\\\", \
-RowBox[{RowBox[{\\\"ad\\\", \\\"[\\\", RowBox[{\\\"388.1367956885007`\\\", \\\
-\",\\\", RowBox[{\\\"\[LeftAssociation]\\\", RowBox[{RowBox[{\\\"\\\\\\\"vol1\
-\\\\\\\"\\\", \\\"\[Rule]\\\", RowBox[{\\\"-\\\", \
-\\\"168965.91171738264`\\\"}]}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc1\\\\\\\"\\\
-\", \\\"\[Rule]\\\", \\\"266.0869481506729`\\\"}], \\\",\\\", \
-RowBox[{\\\"\\\\\\\"vol2\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"4.514397664202416892948282425623512647385598`15.259770224357432*^-118694\\\
-\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc2\\\\\\\"\\\", \\\"\[Rule]\\\", \
-RowBox[{\\\"-\\\", \
-\\\"1.8623052678588263678034568115669427934142`15.25977022433991*^-118696\\\"}\
-]}], \\\",\\\", RowBox[{\\\"\\\\\\\"vol3\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"9.411888944551163098317077379335113005168563`15.259629840333016*^-118790\\\
-\"}], \\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"30\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc18\\\\\\\"\\\", \\\"\
-\[Rule]\\\", RowBox[{\\\"-\\\", \
-\\\"1.565726048252374733473683610921188`15.258163700738484*^-118760\\\"}]}], \
-\\\",\\\", RowBox[{\\\"\\\\\\\"vol19\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"79185.17438587759`\\\"}], \\\",\\\", \
-RowBox[{\\\"\\\\\\\"fc19\\\\\\\"\\\", \\\"\[Rule]\\\", \\\"47689.01597245842`\
-\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"vol20\\\\\\\"\\\", \\\"\[Rule]\\\", \\\
-\"0.`\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc20\\\\\\\"\\\", \
-\\\"\[Rule]\\\", \\\"0.`\\\"}]}], \\\"\[RightAssociation]\\\"}]}], \
-\\\"]\\\"}], \\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"3\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"ad\\\", \\\"[\\\", \
-RowBox[{\\\"1.2576741464481114`\\\", \\\",\\\", \
-RowBox[{\\\"\[LeftAssociation]\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \
-\\\"1\\\", \\\"\[RightSkeleton]\\\"}], \\\"\[RightAssociation]\\\"}]}], \\\"]\
-\\\"}]}], \\\"}\\\"}], \\\" \\\", RowBox[{\\\"{\\\", \
-RowBox[{RowBox[{\\\"{\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\"}\\\"}], \\\",\\\", RowBox[{\\\"{\\\", RowBox[{\\\
-\"\[LeftSkeleton]\\\", \\\"1\\\", \\\"\[RightSkeleton]\\\"}], \\\"}\\\"}], \\\
-\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"36\\\", \
-\\\"\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"{\\\", RowBox[{\\\"\
-\[LeftSkeleton]\\\", \\\"1\\\", \\\"\[RightSkeleton]\\\"}], \\\"}\\\"}], \
-\\\",\\\", RowBox[{\\\"{\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \
-\\\"\[RightSkeleton]\\\"}], \\\"}\\\"}]}], \\\"}\\\"}]}]\\) cannot be \
-combined.\"",2,31,7,25536696398392480224,"Local"},
+  "Keys","invrl",
+   "\"The argument \\!\\(\\*RowBox[{\\\"output\\\"}]\\) is not a valid \
+Association or a list of rules.\"",2,0,1,25537231644206564626,"Local"},
   "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658946462973*^9}],
+ CellChangeTimes->{3.6937401167174363`*^9}],
 
 Cell[BoxData[
- TemplateBox[{
-  "JLink`Java","excptn",
-   "\"A Java exception occurred: \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"MathLinkException: 1100: Expression on link is \
-not a valid Java object reference\\\\\\\"\\\"}]\\).\"",2,31,8,
-   25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658946822009*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "Thread","tdlen",
-   "\"Objects of unequal length in \\!\\(\\*RowBox[{RowBox[{\\\"{\\\", \
-RowBox[{RowBox[{\\\"ad\\\", \\\"[\\\", RowBox[{RowBox[{\\\"-\\\", \
-\\\"7627.219043994517`\\\"}], \\\",\\\", RowBox[{\\\"\[LeftAssociation]\\\", \
-RowBox[{RowBox[{\\\"\\\\\\\"vol2\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"3.2370569854662605`*^6\\\"}], \\\",\\\", \
-RowBox[{\\\"\\\\\\\"fc2\\\\\\\"\\\", \\\"\[Rule]\\\", \\\"8120.7967828356195`\
-\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"vol3\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"3.364866251043501220474100067109194366882587`14.919003522069463*^-118790\\\
-\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc3\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"1.728637498236530342504819003548622853034`14.903474548915302*^-118793\\\"}\
-], \\\",\\\", RowBox[{\\\"\\\\\\\"vol4\\\\\\\"\\\", \\\"\[Rule]\\\", RowBox[{\
-\\\"-\\\", \\\"3.24245512576873884413673491708235`15.021321435661033*^-118684\
-\\\"}]}], \\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"28\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc18\\\\\\\"\\\", \\\"\
-\[Rule]\\\", RowBox[{\\\"-\\\", \
-\\\"1.3308276711783332645414183855850717`15.025135350214208*^-118759\\\"}]}], \
-\\\",\\\", RowBox[{\\\"\\\\\\\"vol19\\\\\\\"\\\", \\\"\[Rule]\\\", RowBox[{\\\
-\"-\\\", \\\"1.5002098087230101`*^6\\\"}]}], \\\",\\\", \
-RowBox[{\\\"\\\\\\\"fc19\\\\\\\"\\\", \\\"\[Rule]\\\", RowBox[{\\\"-\\\", \
-\\\"295156.012189631`\\\"}]}], \\\",\\\", RowBox[{\\\"\\\\\\\"vol20\\\\\\\"\\\
-\", \\\"\[Rule]\\\", \\\"0.`\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc20\\\\\\\
-\"\\\", \\\"\[Rule]\\\", \\\"0.`\\\"}]}], \\\"\[RightAssociation]\\\"}]}], \\\
-\"]\\\"}], \\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"3\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"ad\\\", \\\"[\\\", \
-RowBox[{RowBox[{\\\"-\\\", \\\"1.0151342029019355`\\\"}], \\\",\\\", RowBox[{\
-\\\"\[LeftAssociation]\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\"\[RightAssociation]\\\"}]}], \\\"]\\\"}]}], \\\"}\
-\\\"}], \\\" \\\", RowBox[{\\\"{\\\", RowBox[{RowBox[{\\\"{\\\", RowBox[{\\\"\
-\[LeftSkeleton]\\\", \\\"1\\\", \\\"\[RightSkeleton]\\\"}], \\\"}\\\"}], \
-\\\",\\\", RowBox[{\\\"{\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \
-\\\"\[RightSkeleton]\\\"}], \\\"}\\\"}], \\\",\\\", RowBox[{\\\"\
-\[LeftSkeleton]\\\", \\\"37\\\", \\\"\[RightSkeleton]\\\"}], \\\",\\\", \
-RowBox[{\\\"{\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\"}\\\"}]}], \\\"}\\\"}]}]\\) cannot be \
-combined.\"",2,31,9,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658947141041*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`Java","excptn",
-   "\"A Java exception occurred: \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"MathLinkException: 1100: Expression on link is \
-not a valid Java object reference\\\\\\\"\\\"}]\\).\"",2,31,10,
-   25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658947523079*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "General","stop",
-   "\"Further output of \\!\\(\\*StyleBox[RowBox[{\\\"JLink`Java\\\", \
-\\\"::\\\", \\\"excptn\\\"}], \\\"MessageName\\\"]\\) will be suppressed \
-during this calculation.\"",2,31,11,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658947872114*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "Thread","tdlen",
-   "\"Objects of unequal length in \\!\\(\\*RowBox[{RowBox[{\\\"{\\\", \
-RowBox[{RowBox[{\\\"ad\\\", \\\"[\\\", RowBox[{\\\"409.74786705293286`\\\", \
-\\\",\\\", RowBox[{\\\"\[LeftAssociation]\\\", \
-RowBox[{RowBox[{\\\"\\\\\\\"vol3\\\\\\\"\\\", \\\"\[Rule]\\\", \
-RowBox[{\\\"-\\\", \\\"130218.49104787194`\\\"}]}], \\\",\\\", RowBox[{\\\"\\\
-\\\\\"fc3\\\\\\\"\\\", \\\"\[Rule]\\\", \\\"95.69159898487972`\\\"}], \\\",\\\
-\", RowBox[{\\\"\\\\\\\"vol4\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"2.1161115910012237097675271017444`15.184682151003871*^-118685\\\"}], \
-\\\",\\\", RowBox[{\\\"\\\\\\\"fc4\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"2.4665176620760722697270061835`15.184682151003871*^-118688\\\"}], \\\",\\\
-\", RowBox[{\\\"\\\\\\\"vol5\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"5.97052518080310654938955258344`15.116229209717766*^-118630\\\"}], \
-\\\",\\\", RowBox[{\\\"\\\\\\\"fc5\\\\\\\"\\\", \\\"\[Rule]\\\", \
-\\\"8.75485799826559788798491477`15.116229209717766*^-118633\\\"}], \
-\\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"25\\\", \
-\\\"\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc18\\\\\\\"\\\", \
-\\\"\[Rule]\\\", \
-\\\"2.732177513489197309341743640098236`15.143555912386113*^-118760\\\"}], \\\
-\",\\\", RowBox[{\\\"\\\\\\\"vol19\\\\\\\"\\\", \\\"\[Rule]\\\", \
-RowBox[{\\\"-\\\", \\\"148513.5728035588`\\\"}]}], \\\",\\\", \
-RowBox[{\\\"\\\\\\\"fc19\\\\\\\"\\\", \\\"\[Rule]\\\", RowBox[{\\\"-\\\", \
-\\\"20488.360810604707`\\\"}]}], \\\",\\\", RowBox[{\\\"\\\\\\\"vol20\\\\\\\"\
-\\\", \\\"\[Rule]\\\", \\\"0.`\\\"}], \\\",\\\", RowBox[{\\\"\\\\\\\"fc20\\\\\
-\\\"\\\", \\\"\[Rule]\\\", \\\"0.`\\\"}]}], \\\"\[RightAssociation]\\\"}]}], \
-\\\"]\\\"}], \\\",\\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"3\\\", \\\"\
-\[RightSkeleton]\\\"}], \\\",\\\", RowBox[{\\\"ad\\\", \\\"[\\\", \
-RowBox[{\\\"0.43342298330918744`\\\", \\\",\\\", \
-RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\\\", \\\"\[RightSkeleton]\\\"}]}], \
-\\\"]\\\"}]}], \\\"}\\\"}], \\\" \\\", RowBox[{\\\"\[LeftSkeleton]\\\", \\\"1\
-\\\", \\\"\[RightSkeleton]\\\"}]}]\\) cannot be combined.\"",2,31,12,
-   25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.6936589482001467`*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "General","stop",
-   "\"Further output of \\!\\(\\*StyleBox[RowBox[{\\\"Thread\\\", \\\"::\\\", \
-\\\"tdlen\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
-calculation.\"",2,31,13,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.6936589484981766`*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","fail",
-   "\"Error calling constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\).\"",2,31,14,25536696398392480224,
-   "Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658948600187*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","fail",
-   "\"Error calling constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\).\"",2,31,15,25536696398392480224,
-   "Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.6936589486971965`*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","fail",
-   "\"Error calling constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\).\"",2,31,16,25536696398392480224,
-   "Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658948802207*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "General","stop",
-   "\"Further output of \\!\\(\\*StyleBox[RowBox[{\\\"JLink`JavaNew\\\", \
-\\\"::\\\", \\\"fail\\\"}], \\\"MessageName\\\"]\\) will be suppressed during \
-this calculation.\"",2,31,17,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658948909218*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","argx",
-   "\"Incorrect number or type of arguments to constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\). The arguments, shown here in a list, \
-were \\!\\(\\*RowBox[{\\\"{\\\", \
-RowBox[{\\\"\\\\\\\"regressionCoefficientAndSensitivityBothLoopsNew[\
-exerciseDates_, forward_, vols_, ir_, rvsBkwd_, rvsFwd_, <<2>>]\\\\\\\"\\\", \
-\\\",\\\", \\\"\\\\\\\"155180\\\\\\\"\\\", \\\",\\\", \\\"$Failed\\\", \
-\\\",\\\", \\\"\\\\\\\"AD.m\\\\\\\"\\\", \\\",\\\", \\\"777\\\", \\\",\\\", \
-\\\"2212\\\"}], \\\"}\\\"}]\\).\"",2,31,18,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658949055232*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","argx",
-   "\"Incorrect number or type of arguments to constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\). The arguments, shown here in a list, \
-were \\!\\(\\*RowBox[{\\\"{\\\", RowBox[{\\\"\\\\\\\"Module[{nE, nB, nMC, \
-terminalvols, spotBkwd, spotFwd, <<32>>}, {<<2>>} = Dimensions[<<1>>]; \
-If[Equal[<<2>>], {<<10>>}, CompoundExpression[<<22>>]]]\\\\\\\"\\\", \
-\\\",\\\", \\\"\\\\\\\"155366\\\\\\\"\\\", \\\",\\\", \\\"$Failed\\\", \
-\\\",\\\", \\\"\\\\\\\"AD.m\\\\\\\"\\\", \\\",\\\", \\\"778\\\", \\\",\\\", \
-\\\"10\\\"}], \\\"}\\\"}]\\).\"",2,31,19,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658952252552*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "JLink`JavaNew","argx",
-   "\"Incorrect number or type of arguments to constructor for class \
-\\!\\(\\*RowBox[{\\\"\\\\\\\"com.wolfram.eclipse.MEET.debug.\
-MathematicaStackFrame\\\\\\\"\\\"}]\\). The arguments, shown here in a list, \
-were \\!\\(\\*RowBox[{\\\"{\\\", RowBox[{\\\"\\\\\\\"{nMC, nE} = \
-Dimensions[rvsBkwd]; If[nE == 1, {{<<1>>}, {<<1>>}, {<<1>>}, {<<1>>}, \
-{<<1>>}, {<<1>>}, <<4>>}, Set[<<2>>]; Set[<<2>>]; Set[<<2>>]; Set[<<2>>]; \
-Set[<<2>>]; Set[<<2>>]; <<16>>]\\\\\\\"\\\", \\\",\\\", \
-\\\"\\\\\\\"155364\\\\\\\"\\\", \\\",\\\", \\\"$Failed\\\", \\\",\\\", \\\"\\\
-\\\\\"AD.m\\\\\\\"\\\", \\\",\\\", \\\"783\\\", \\\",\\\", \\\"10\\\"}], \
-\\\"}\\\"}]\\).\"",2,31,20,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658955525879*^9}],
-
-Cell[BoxData[
- TemplateBox[{
-  "General","stop",
-   "\"Further output of \\!\\(\\*StyleBox[RowBox[{\\\"JLink`JavaNew\\\", \
-\\\"::\\\", \\\"argx\\\"}], \\\"MessageName\\\"]\\) will be suppressed during \
-this calculation.\"",2,31,21,25536696398392480224,"Local"},
-  "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.6936580926896043`*^9, 3.6936583880451365`*^9, 
-  3.693658955573884*^9}]
+ RowBox[{"Keys", "[", "output", "]"}]], "Output",
+ CellChangeTimes->{3.693740116720436*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -15427,101 +15168,88 @@ Cell[447152, 11566, 316, 5, 41, "Subsection"],
 Cell[CellGroupData[{
 Cell[447493, 11575, 99, 1, 39, "Subsubsection"],
 Cell[CellGroupData[{
-Cell[447617, 11580, 16913, 411, 812, "Input"],
-Cell[464533, 11993, 4508, 63, 39, "Output"]
+Cell[447617, 11580, 16939, 412, 812, "Input"],
+Cell[464559, 11994, 4798, 67, 39, "Output"]
+}, Open  ]],
+Cell[469372, 12064, 424, 9, 30, "Input"],
+Cell[CellGroupData[{
+Cell[469821, 12077, 130, 2, 30, "Input"],
+Cell[469954, 12081, 276, 6, 21, "Message"],
+Cell[470233, 12089, 105, 2, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[469078, 12061, 424, 9, 30, "Input"],
-Cell[469505, 12072, 397, 9, 21, "Message"],
-Cell[469905, 12083, 2769, 43, 75, "Message"],
-Cell[472677, 12128, 397, 9, 21, "Message"],
-Cell[473077, 12139, 2709, 40, 75, "Message"],
-Cell[475789, 12181, 398, 9, 21, "Message"],
-Cell[476190, 12192, 396, 8, 21, "Message"],
-Cell[476589, 12202, 2291, 36, 75, "Message"],
-Cell[478883, 12240, 393, 8, 21, "Message"],
-Cell[479279, 12250, 380, 9, 21, "Message"],
-Cell[479662, 12261, 382, 9, 21, "Message"],
-Cell[480047, 12272, 380, 9, 21, "Message"],
-Cell[480430, 12283, 397, 8, 21, "Message"],
-Cell[480830, 12293, 809, 14, 39, "Message"],
-Cell[481642, 12309, 843, 14, 39, "Message"],
-Cell[482488, 12325, 885, 15, 56, "Message"],
-Cell[483376, 12342, 397, 8, 21, "Message"]
+Cell[470375, 12096, 3482, 87, 145, "Input"],
+Cell[473860, 12185, 15806, 299, 245, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[483810, 12355, 3482, 87, 145, "Input"],
-Cell[487295, 12444, 15806, 299, 245, "Output"]
+Cell[489703, 12489, 580, 18, 30, "Input"],
+Cell[490286, 12509, 439, 6, 30, "Output"]
+}, Open  ]],
+Cell[490740, 12518, 86, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[490851, 12523, 235, 7, 30, "Input"],
+Cell[491089, 12532, 6994, 148, 206, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[503138, 12748, 580, 18, 30, "Input"],
-Cell[503721, 12768, 439, 6, 30, "Output"]
-}, Open  ]],
-Cell[504175, 12777, 86, 1, 30, "Text"],
-Cell[CellGroupData[{
-Cell[504286, 12782, 235, 7, 30, "Input"],
-Cell[504524, 12791, 6994, 148, 206, "Output"]
+Cell[498120, 12685, 235, 7, 30, "Input"],
+Cell[498358, 12694, 2748, 50, 88, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[511555, 12944, 235, 7, 30, "Input"],
-Cell[511793, 12953, 2748, 50, 88, "Output"]
+Cell[501143, 12749, 235, 7, 30, "Input"],
+Cell[501381, 12758, 5230, 118, 206, "Output"]
+}, Open  ]],
+Cell[506626, 12879, 88, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[506739, 12884, 235, 7, 30, "Input"],
+Cell[506977, 12893, 3626, 67, 149, "Output"]
+}, Open  ]],
+Cell[510618, 12963, 84, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[510727, 12968, 2465, 70, 126, "Input"],
+Cell[513195, 13040, 5069, 133, 404, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[514578, 13008, 235, 7, 30, "Input"],
-Cell[514816, 13017, 5230, 118, 206, "Output"]
-}, Open  ]],
-Cell[520061, 13138, 88, 1, 30, "Text"],
-Cell[CellGroupData[{
-Cell[520174, 13143, 235, 7, 30, "Input"],
-Cell[520412, 13152, 3626, 67, 149, "Output"]
-}, Open  ]],
-Cell[524053, 13222, 84, 1, 30, "Text"],
-Cell[CellGroupData[{
-Cell[524162, 13227, 2465, 70, 126, "Input"],
-Cell[526630, 13299, 5069, 133, 404, "Output"]
+Cell[518301, 13178, 2465, 70, 126, "Input"],
+Cell[520769, 13250, 4736, 124, 402, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[531736, 13437, 2465, 70, 126, "Input"],
-Cell[534204, 13509, 4736, 124, 402, "Output"]
+Cell[525542, 13379, 2465, 70, 126, "Input"],
+Cell[528010, 13451, 4754, 126, 402, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[538977, 13638, 2465, 70, 126, "Input"],
-Cell[541445, 13710, 4754, 126, 402, "Output"]
+Cell[532801, 13582, 2465, 70, 126, "Input"],
+Cell[535269, 13654, 4771, 127, 402, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[546236, 13841, 2465, 70, 126, "Input"],
-Cell[548704, 13913, 4771, 127, 402, "Output"]
+Cell[540077, 13786, 2465, 70, 126, "Input"],
+Cell[542545, 13858, 4791, 129, 402, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[553512, 14045, 2465, 70, 126, "Input"],
-Cell[555980, 14117, 4791, 129, 402, "Output"]
+Cell[547373, 13992, 2465, 70, 126, "Input"],
+Cell[549841, 14064, 4657, 118, 416, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[560808, 14251, 2465, 70, 126, "Input"],
-Cell[563276, 14323, 4657, 118, 416, "Output"]
+Cell[554535, 14187, 2465, 70, 126, "Input"],
+Cell[557003, 14259, 2399, 62, 370, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[567970, 14446, 2465, 70, 126, "Input"],
-Cell[570438, 14518, 2399, 62, 370, "Output"]
+Cell[559439, 14326, 2465, 70, 126, "Input"],
+Cell[561907, 14398, 2229, 59, 370, "Output"]
 }, Open  ]],
+Cell[564151, 14460, 89, 1, 30, "Text"],
 Cell[CellGroupData[{
-Cell[572874, 14585, 2465, 70, 126, "Input"],
-Cell[575342, 14657, 2229, 59, 370, "Output"]
+Cell[564265, 14465, 1019, 29, 69, "Input"],
+Cell[565287, 14496, 1977, 54, 370, "Output"]
 }, Open  ]],
-Cell[577586, 14719, 89, 1, 30, "Text"],
+Cell[567279, 14553, 92, 1, 30, "Text"],
 Cell[CellGroupData[{
-Cell[577700, 14724, 1019, 29, 69, "Input"],
-Cell[578722, 14755, 1977, 54, 370, "Output"]
+Cell[567396, 14558, 949, 28, 69, "Input"],
+Cell[568348, 14588, 1885, 51, 374, "Output"]
 }, Open  ]],
-Cell[580714, 14812, 92, 1, 30, "Text"],
-Cell[CellGroupData[{
-Cell[580831, 14817, 949, 28, 69, "Input"],
-Cell[581783, 14847, 1885, 51, 374, "Output"]
-}, Open  ]],
-Cell[583683, 14901, 90, 1, 30, "Text"]
+Cell[570248, 14642, 90, 1, 30, "Text"]
 }, Open  ]]
 }, Open  ]],
-Cell[583800, 14906, 100, 1, 49, "Subsection"]
+Cell[570365, 14647, 100, 1, 49, "Subsection"]
 }, Open  ]]
 }
 ]
