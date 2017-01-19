@@ -622,13 +622,14 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
 
 forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPrime_, spot_, strike_, exerciseDates_, forward_, terminalvols_, rvs_] :=
     Module[{nB, nMC, nE, notExercised, contValue, cashflow, value,
-      cashflowBar, betaBar, aBar, bBar, xBar, eBar, hBar, vBar, fcBar, volBar, Amat, Bvec, day, aux, dndE, betaFwd},
+      cashflowBar, betaBar, aBar, bBar, xBar, eBar, hBar, vBar, fcBar, volBar, Amat, Bvec, day, aux, xua, dndE, betaFwd,
+      HmE, thetaHgE},
 
-	  {nB, nMC, nE} = Dimensions[phi];
+      {nB, nMC, nE} = Dimensions[phi];
 
-      cashflow = ConstantArray[0, {nE, nMC}];
-      notExercised = ConstantArray[0, {nE, nMC}];
-      contValue = ConstantArray[0, {nE - 1, nMC}];
+      cashflow = ConstantArray[0, nMC];
+      notExercised = ConstantArray[0, {nE, nMC}]; (* notExercised[[day]] ~ not exercised up to day - 1 inclusive *)
+      contValue = ConstantArray[0, {nE, nMC}]; (* changed first dimension to nE *)
       value = ConstantArray[0, {nE, nMC}];
 
       cashflowBar = ConstantArray[1 / nMC, nMC];
@@ -646,43 +647,61 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       vBar[[1]] = ConstantArray[1, nMC];
 
       (*contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi, {3, 2, 1}][[1 ;; -2]]}];*) (* nE-1 x nMC *)
-      contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi[[All, All, 1;;nE-1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
+      contValue[[1;;nE-1, 1;;nMC]] = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
 
-      notExercised[[1]] = ConstantArray[1, nMC];
+      (* TODO: first calculate all days, then multiply ? *)
+      (*aux = stheta[contValue[[#]] - exerciseValue[[#]], $eps] & /@ Range[nE - 1];*)
+      HmE = contValue - exerciseValue;
+      thetaHgE = stheta[HmE, $eps]; (* nE x nMC *)
+      (*aux = stheta[contValue[[1 ;; nE - 1]] - exerciseValue[[1 ;; nE - 1]], $eps];*) (* nE-1 x nMC *)
+      notExercised = FoldList[Times, ConstantArray[1, nMC], thetaHgE[[1;; nE - 1]]]; (* nE x nMC *)
 
-	  (* TODO: first calculate all days, then multiply ? *)
-      day = 1;
+      cashflow = seqsum[#] & /@ (notExercised (ConstantArray[1, Dimensions[thetaHgE]] - thetaHgE) exerciseValue / numeraire); (* nMC *)
+
+      (* TODO: replace with above ? *)
+      (*day = 1;
+      notExercised[[day]] = ConstantArray[1, nMC];
       While[day <= nE - 1,
-      (*contValue[[day]] = seqsum[beta[[day]] #] & /@ Transpose[phi[[day]]]; *)(* nMC *)
         notExercised[[day + 1]] = notExercised[[day]] * stheta[contValue[[day]] - exerciseValue[[day]], $eps];
         cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]] - contValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
         day = day + 1;
-
       ];
 
       (* day = nE *)
-      cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];
+      cashflow[[day]] = notExercised[[day]] * stheta[exerciseValue[[day]], $eps] * exerciseValue[[day]] / numeraire[[day]];*)
 
       (* d_notExercised / d_exerciseValue *)
       (*dndE = ConstantArray[0, {nE, nE}];*)
       (*dndE[[1]] = ConstantArray[0, nE];*)
       dndE =
           Table[
-          	Which[day == 1 || m >= day, ConstantArray[0, nMC], 
-          		  day == 2, -sdd[contValue[[1]] - exerciseValue[[1]], $eps],
-          		  True,-sdd[contValue[[m]] - exerciseValue[[m]], $eps] *
-              seqprod[stheta[contValue[[Drop[Range[1, day - 1], {m}]]] - exerciseValue[[Drop[Range[1, day - 1], {m}]]], $eps]]],
+            Which[day == 1 || m >= day, ConstantArray[0, nMC],
+              day == 2, -sdd[HmE[[1]], $eps],
+              True, -sdd[HmE[[m]], $eps] * seqprod[thetaHgE[[Drop[Range[1, day - 1], {m}]]]]],
             {day, 1, nE}, {m, 1, nE}]; (* nE \mu x nE m x nMC *)
 
       value = seqsum[cashflow] / nMC;
 
-	  (* TODO: this is wrong *)
-      day = 1;
-      While[day <= nE,
+      aux = seqsum[(1 - thetaHgE) exerciseDates / numeraire # & /@ Transpose[dndE, {2, 1, 3}]];
+      
+      xua =  notExercised / numeraire;
+      
+      eBar += aux + xua (sdd[-HmE, $eps] exerciseValue);
 
-        aux = seqsum[dndE[[#]] * stheta[exerciseValue[[#]] - contValue[[#]], $eps] * exerciseValue[[#]] / numeraire[[#]]
-            & /@ Range[day + 1, nE]] + notExercised[[day]] *
-            sdd[exerciseValue[[day]] - contValue[[day]], $eps] exerciseValue[[day]] / numeraire[[day]];
+      hBar += cashflowBar # & /@  (-eBar);
+
+      eBar += cashflowBar # & /@  (xua (1 - thetaHgE));
+
+
+
+      (* TODO: this is wrong *)
+      (* TODO: Replace with above ? *)
+      (*day = 1;*)
+      (*While[day <= nE,*)
+
+        (*aux = seqsum[dndE[[#]] * stheta[exerciseValue[[#]] - contValue[[#]], $eps] * exerciseValue[[#]] / numeraire[[#]]*)
+            (*& /@ Range[day + 1, nE]] + notExercised[[day]] **)
+            (*sdd[exerciseValue[[day]] - contValue[[day]], $eps] exerciseValue[[day]] / numeraire[[day]];*)
 
         (*aux =*)
         (*seqsum[d_n_d_E[[#]] * stheta[exerciseValue[[#]] - contValue[[#]], $eps] * exerciseValue[[#]] / numeraire[[#]]*)
@@ -691,13 +710,13 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
         (*(sdd[exerciseValue[[day]] - contValue[[day]], $eps] * exerciseValue[[day]] +*)
         (*stheta[exerciseValue[[day]] - contValue[[day]], $eps]);*)
 
-        eBar[[day]] = cashflowBar[[day]] (aux + notExercised[[day]] / numeraire[[day]] *
-            stheta[exerciseValue[[day]] - contValue[[day]], $eps]);
+        (*eBar[[day]] = cashflowBar[[day]] (aux + notExercised[[day]] / numeraire[[day]] **)
+            (*stheta[exerciseValue[[day]] - contValue[[day]], $eps]);*)
 
-        hBar[[day]] = cashflowBar[[day]] (-aux);
+        (*hBar[[day]] = cashflowBar[[day]] (-aux);*)
 
-        day = day + 1;
-      ];
+        (*day = day + 1;*)
+      (*];*)
 
 
       xBar += eBar payoffBermudanPrime[spot, strike];
@@ -718,13 +737,13 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       (*value = MapThread[sm[#1 - #2, $eps] &, {exerciseValue, contValue}, {2}];*)
       value = contValue + sm[exerciseValue - contValue, $eps];
 
-      Bvec = seqsum[#] & /@ (numeraire[[1;;nE-1]] / numeraire[[2;;nE]] * value[[2;;nE]] phi[[All, All, 1;;nE-1]]);
+      Bvec = seqsum[#] & /@ (numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]] phi[[All, All, 1 ;; nE - 1]]);
 
       betaFwd = LinearSolve[Amat, Bvec];
 
-      xBar[[1;;nE-1]] += (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phiPrime[[All, All, 1;;nE - 1]], {2, 3, 1}]}]) *
+      xBar[[1 ;; nE - 1]] += (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phiPrime[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
 
-          numeraire[[1;;nE - 1]] / numeraire[[2;;nE]] * value[[2;;nE]];
+          numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]];
 
       xBar += (seqsum[#] & /@
           Transpose@
