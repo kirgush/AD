@@ -57,3 +57,4 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Need the values on the forward loop as well ? Yes.
   - ~~Wrong `dndE`.~~ FIXED
   - Wrong `eBar`, `hBar`.
+  - Output all `values`.
