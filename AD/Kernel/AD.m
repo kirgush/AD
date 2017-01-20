@@ -251,21 +251,25 @@ cSimulationSpot =
 	Compile[{{fc, _Real, 1}, {termVol, _Real, 1}, {rvs, _Real, 2}}, Exp[Log[fc]- 1/2 termVol^2 + termVol #] & /@ rvs,
 	CompilationTarget->"C"];
 
-$eps = 0.0005;
+$eps = 0;
 
-sdd[x_, \[Epsilon]_] = PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
+sdd[x_ /; Dimensions[x]=={}, 0] := 0;
+sdd[x_ /; Dimensions[x]!={}, 0] := ConstantArray[0, Dimensions[x]];
+sdd[x_, \[Epsilon]_] := PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
-stheta[0, 0] = 0;
-stheta[x_, 0] = HeavisideTheta[x];
-stheta[x_, \[Epsilon]_] = CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
+stheta[0|0., 0] := 0;
+stheta[ad[0|0., y_Association], 0] := 0
+stheta[x_, 0] := HeavisideTheta[x];
+stheta[x_, \[Epsilon]_] := CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* Next two lines implementing elementwise Max *)
 (*sm[x_, 0] /; Dimensions[x]=={} := Max[x, 0];
 sm[x_, 0] /; Dimensions[x]!={} := MapThread[Max[#1, #2]&, {x, ConstantArray[0, Dimensions[x]]}, Length[Dimensions[x]]];*)
 (* TODO: any clean way to do this ? *)
-sm[0, eps_] = 0;
-sm[x_, 0] = x HeavisideTheta[x];
-sm[x_, \[Epsilon]_] = 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
+sm[0|0., eps_] := 0;
+sm[ad[0|0., y_Association], 0] := 0
+sm[x_, 0] := x HeavisideTheta[x];
+sm[x_, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* TODO: Remove *)
 smp[x_, \[Epsilon]_] = 1/2 Erfc[-(x / (2 Sqrt[\[Epsilon]]))];

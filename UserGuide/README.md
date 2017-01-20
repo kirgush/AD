@@ -58,3 +58,4 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - ~~Wrong `dndE`.~~ FIXED
   - Wrong `eBar`, `hBar`.
   - Output all `values`.
+  - ~~$\epsilon = 0$ doesn't work.~~ FIXED with taking care of `sdd`.
