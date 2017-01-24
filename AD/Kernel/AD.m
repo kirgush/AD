@@ -13,7 +13,8 @@ makePartial::usage=""
 propagatead::usage=""
 ad::usage=""
 toValue::usage=""
-seqsum::usage="Recursive total to overcome slowness of built-in Total on `ad` objects.
+seqsum::usage="Recursive total to overcome slowness of built-in Total on `ad` objects. 
+It sums over the first dimension of arrays.
   Example:
 
   seqsum[{ad[-23.7517,<|vol->-1.57748,fc->-1.02938|>],
@@ -254,21 +255,24 @@ cSimulationSpot =
 $eps = 0;
 
 sdd[x_ /; Dimensions[x]=={}, 0] := 0;
+sdd[ad[0|0., _Association], 0] := 0;
 sdd[x_ /; Dimensions[x]!={}, 0] := ConstantArray[0, Dimensions[x]];
 sdd[x_, \[Epsilon]_] := PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 stheta[0|0., 0] := 0;
-stheta[ad[0|0., y_Association], 0] := 0
-stheta[x_, 0] := HeavisideTheta[x];
+stheta[x_ /; Dimensions[x]!={} && SubsetQ[{0, 0.}, Union[Flatten[x]]], 0] := ConstantArray[0, Dimensions[x]];
+stheta[ad[0|0., _Association], 0] := 0;
+stheta[x_, 0] := HeavisideTheta[x] /. HeavisideTheta[0|0.]->0;
 stheta[x_, \[Epsilon]_] := CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* Next two lines implementing elementwise Max *)
 (*sm[x_, 0] /; Dimensions[x]=={} := Max[x, 0];
 sm[x_, 0] /; Dimensions[x]!={} := MapThread[Max[#1, #2]&, {x, ConstantArray[0, Dimensions[x]]}, Length[Dimensions[x]]];*)
 (* TODO: any clean way to do this ? *)
-sm[0|0., eps_] := 0;
-sm[ad[0|0., y_Association], 0] := 0
-sm[x_, 0] := x HeavisideTheta[x];
+(*sm[0|0., eps_] := 0;*) (* TODO: Why ? This is wrong *)
+sm[0|0., 0] := 0;
+sm[ad[0|0., _Association], 0] := 0;
+sm[x_, 0] := x HeavisideTheta[x] /. HeavisideTheta[0|0.]->0;
 sm[x_, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* TODO: Remove *)
@@ -636,7 +640,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       contValue = ConstantArray[0, {nE, nMC}]; (* changed first dimension to nE *)
       value = ConstantArray[0, {nE, nMC}];
 
-      cashflowBar = ConstantArray[1. / nMC, nMC];
+      cashflowBar = ConstantArray[1 / nMC, nMC];
       betaBar = ConstantArray[0, {nE - 1, nB}];
       aBar = ConstantArray[0, {nE - 1, nB, nB}];
       bBar = ConstantArray[0, {nE - 1, nB}];
@@ -651,14 +655,14 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       vBar[[1]] = ConstantArray[1, nMC];
 
       (*contValue = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi, {3, 2, 1}][[1 ;; -2]]}];*) (* nE-1 x nMC *)
-      contValue[[1;;nE-1, 1;;nMC]] = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
+      contValue[[1 ;; nE - 1, 1 ;; nMC]] = MapThread[seqsum[#1 #2] &, {beta, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
 
       (* TODO: first calculate all days, then multiply ? *)
       (*aux = stheta[contValue[[#]] - exerciseValue[[#]], $eps] & /@ Range[nE - 1];*)
       HmE = contValue - exerciseValue;
       thetaHgE = stheta[HmE, $eps]; (* nE x nMC *)
       (*aux = stheta[contValue[[1 ;; nE - 1]] - exerciseValue[[1 ;; nE - 1]], $eps];*) (* nE-1 x nMC *)
-      notExercised = FoldList[Times, ConstantArray[1, nMC], thetaHgE[[1;; nE - 1]]]; (* nE x nMC *)
+      notExercised = FoldList[Times, ConstantArray[1, nMC], thetaHgE[[1 ;; nE - 1]]]; (* nE x nMC *)
 
       cashflow = seqsum[notExercised (ConstantArray[1, Dimensions[thetaHgE]] - thetaHgE) exerciseValue / numeraire]; (* nMC *)
 
@@ -685,29 +689,32 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
               True, -sdd[HmE[[m]], $eps] * seqprod[thetaHgE[[Drop[Range[1, day - 1], {m}]]]]],
             {day, 1, nE}, {m, 1, nE}]; (* nE \mu x nE m x nMC *)
 
-      value = seqsum[cashflow] / nMC;
+      (* TODO: output this *)
+      (*value = seqsum[cashflow] / nMC;*)
 
-      aux = seqsum[(1 - thetaHgE) exerciseDates / numeraire # & /@ Transpose[dndE, {2, 1, 3}]];
-      
-      xua =  notExercised / numeraire;
-      
+      aux = seqsum[(1 - thetaHgE) exerciseValue / numeraire # & /@ Transpose[dndE, {2, 1, 3}]];
+
+      xua = notExercised / numeraire;
+
       tmp = (cashflowBar #) & /@ (aux + xua sdd[-HmE, $eps] exerciseValue);
-      
+
       eBar = eBar + tmp;
 
       hBar = hBar + (-eBar);
-      
+
       tmp = (cashflowBar #) & /@ (xua (1 - thetaHgE));
 
       eBar = eBar + tmp;
 
       xBar = xBar + eBar Transpose[payoffBermudanPrime[spot, strike]];
-      
-      betaBar = Transpose[seqsum[Transpose[(hBar[[1;;nE-1]] #)]] & /@ Transpose[phi[[All, All, 1;;nE-1]], {1, 3, 2}]]; (* nE-1 xn nB *)
+
+      betaBar = Transpose[seqsum[Transpose[(hBar[[1 ;; nE - 1]] #)]] & /@ Transpose[phi[[All, All, 1 ;; nE - 1]], {1, 3, 2}]]; (* nE-1 xn nB *)
+
+      (*betaBar = 0 betaBar;*)
 
       (*betaBar = MapThread[seqsum[#1 #2] &, {hBar[[1 ;; -2]], Transpose[phi, {3, 2, 1}][[1 ;; nE - 1]]}]; (* nE-1 xn nB *)*)
 
-      xBar[[1;;nE-1]] = xBar[[1;;nE-1]] + hBar[[1;;nE-1]] Transpose[(seqsum[Transpose[beta] #] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {2, 1, 3}])];
+      xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + hBar[[1 ;; nE - 1]] Transpose[(seqsum[Transpose[beta] #] & /@ Transpose[phiPrime[[All, All, 1 ;; nE - 1]], {2, 1, 3}])];
 
       (*xBar = xBar + hBar MapThread[seqsum[#1 #2] &, {beta, Transpose[phiPrime, {3, 2, 1}][[1 ;; nE - 1]]}];*)
 
@@ -715,11 +722,11 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       bBar = LinearSolve[Sequence @@ #] & /@ Transpose[{Amat, betaBar}];
 
-  	  aBar = Function[entry, -Outer[#1 #2 &, entry[[1]], entry[[2]]]][#] & /@ Transpose[{bBar, beta}];
+      aBar = Function[entry, -Outer[#1 #2 &, entry[[1]], entry[[2]]]][#] & /@ Transpose[{bBar, beta}];
 
       (*aBar = -Outer[#1 #2 &, bBar, beta];*)
 
-	  vBar[[2;;nE]] = vBar[[2;;nE]] + Transpose[seqsum[Transpose[beta] #] & /@ Transpose[phi[[All, All, 1;;nE-1]], {2, 1, 3}]];
+      vBar[[2 ;; nE]] = vBar[[2 ;; nE]] + Transpose[seqsum[Transpose[beta] #] & /@ Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 1, 3}]];
 
       (*vBar = (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
           numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]];*)
@@ -727,23 +734,23 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       (*value = MapThread[sm[#1 - #2, $eps] &, {exerciseValue, contValue}, {2}];*)
       value = contValue + sm[exerciseValue - contValue, $eps];
 
-	  Bvec = Transpose[seqsum[Transpose[numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]]] #] & /@ phi[[All, All, 1;;nE-1]]];
+      Bvec = Transpose[seqsum[Transpose[numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]]] #] & /@ phi[[All, All, 1 ;; nE - 1]]];
 
       (*Bvec = seqsum[#] & /@ (numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]] phi[[All, All, 1 ;; nE - 1]]);*)
 
       betaFwd = MapThread[LinearSolve[#1, #2]&, {Amat, Bvec}, 1];
-      
-      xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + Transpose[seqsum[Transpose[beta] #] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {2, 1, 3}]];
 
-      (*xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + (seqsum[#[[1]] #[[2]]] & /@ Transpose[{bBar, Transpose[phiPrime[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]) *
+      (* TODO: where did this come from ? *)
+      xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + Transpose[seqsum[Transpose[beta] #] & /@ Transpose[phiPrime[[All, All, 1 ;; nE - 1]], {2, 1, 3}]];
 
-          numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]];*)
+      xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]] *
+          Transpose[seqsum[Transpose[bBar] #] & /@ Transpose[phiPrime[[All, All, 1 ;; nE - 1]], {2, 1, 3}]];
 
-	  aux = Outer[#1 #2 &, phi[[All, All, 1;;nE-1]], phiPrime[[All, All, 1;;nE-1]], 1, 1];
-	  
-	  aux = Transpose[aux, {3, 4, 1, 2}];
+      aux = Outer[2 #1 #2 &, phi[[All, All, 1 ;; nE - 1]], phiPrime[[All, All, 1 ;; nE - 1]], 1, 1];
 
-	  xBar[[1;;nE-1]] = xBar[[1;;nE-1]] + Transpose[seqsum[Flatten[Transpose[(aBar # & /@ aux), {3, 4, 1, 2}], 1]]];
+      aux = Transpose[aux, {3, 4, 1, 2}];
+
+      xBar[[1 ;; nE - 1]] = xBar[[1 ;; nE - 1]] + Transpose[seqsum[Flatten[Transpose[(aBar # & /@ aux), {3, 4, 1, 2}], 1]]];
 
       (*xBar = xBar + (seqsum[#] & /@
           Transpose@
@@ -754,7 +761,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       volBar = -terminalvols exerciseDates (seqsum[#] & /@ (xBar Transpose[spot])) +
           Sqrt[exerciseDates] (seqsum[#] & /@ (xBar Transpose[spot rvs]));
 
-      {betaFwd, contValue, value, cashflow, fcBar, volBar, vBar, hBar, eBar, xBar, spot}
+      {betaFwd, contValue, value, cashflow, fcBar, volBar, vBar, hBar, eBar, xBar, spot, notExercised}
 
     ];
 
@@ -807,7 +814,7 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
     Module[ {nE, nB, nMC, terminalvols, spotBkwd, spotFwd, numeraire, exerciseValue, valuesFinal, basisFunctionsPrime, phi, phiPrime,
       outABkwd, outBBkwd, outBetaBkwd, outValueBkwd, outHoldValueBkwd, eBarBkwd, hBarBkwd, vBarBkwd, xBarBkwd, fcBarBkwd, volBarBkwd,
       outAFwd, outBFwd, outBetaFwd, outValueFwd, outHoldValueFwd, outCashflowFwd, eBarFwd, hBarFwd, vBarFwd, xBarFwd, fcBarFwd, volBarFwd,
-      elapsedStart, elapsedEnd, elapsedBkwd, elapsedFwd},
+      elapsedStart, elapsedEnd, elapsedBkwd, elapsedFwd, notExercised},
 
       nE = Dimensions[rvsBkwd][[2]];
       terminalvols = vols Sqrt[exerciseDates]; (* nE *)
@@ -833,8 +840,8 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
         exerciseValue = payoffBermudan[Transpose[spotFwd], strike]; (* nE x nMC *)
 
         (* Forward loop: values and sensitivities *)
-        {outBetaFwd, outHoldValueFwd, outValueFwd, fcBarFwd, volBarFwd, vBarFwd, hBarFwd, eBarFwd, xBarFwd, spotFwd} =
-            {{}, {}, exerciseValue[[-1]], {}, {}, {}, {}, {}, {}, spotFwd};
+        {outBetaFwd, outHoldValueFwd, outValueFwd, fcBarFwd, volBarFwd, vBarFwd, hBarFwd, eBarFwd, xBarFwd, spotFwd, notExercised} =
+            {{}, {}, exerciseValue[[-1]], {}, {}, {}, {}, {}, {}, spotFwd, {}};
         elapsedEnd = DateObject[];
         elapsedFwd = QuantityMagnitude[DateDifference[elapsedStart, elapsedEnd, "Minute"]];
 
@@ -843,7 +850,7 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
           "outHoldValueBkwd"->outHoldValueBkwd, "outValueBkwd"->outValueBkwd,
           "outBetaFwd"->outBetaFwd, "outHoldValueFwd"->outHoldValueFwd, "outValueFwd"->outValueFwd,
           "fcBarFwd"->fcBarFwd,"volBarFwd"->volBarFwd, "spotBkwd"->spotBkwd, "spotFwd"->spotFwd,
-          "elapsedBkwd"->elapsedBkwd, "elapsedFwd"->elapsedFwd}],
+          "elapsedBkwd"->elapsedBkwd, "elapsedFwd"->elapsedFwd, "notExercised"->notExercised}],
 
         (* nE > 1 *)
         (* Left as a matrix to allow the ir to become a risk factor *)
@@ -882,8 +889,9 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
         exerciseValue = payoffBermudan[Transpose[spotFwd], strike]; (* nE x nMC *)
 
         (* Forward loop: values and sensitivities *)
-        {outBetaFwd, outHoldValueFwd, outValueFwd, outCashflowFwd, fcBarFwd, volBarFwd, vBarFwd, hBarFwd, eBarFwd, xBarFwd, spotFwd} =
-            forwardLoopValuesAndSensitivities[exerciseValue, numeraire, outBetaBkwd, phi, phiPrime, spotFwd, strike, exerciseDates, forward, terminalvols, rvsFwd];
+        (* TODO: pass only values for backward beta *)
+        {outBetaFwd, outHoldValueFwd, outValueFwd, outCashflowFwd, fcBarFwd, volBarFwd, vBarFwd, hBarFwd, eBarFwd, xBarFwd, spotFwd, notExercised} =
+            forwardLoopValuesAndSensitivities[exerciseValue, numeraire, outBetaBkwd /. {y_Association -> Association[KeyValueMap[#1->1 &, y]]}, phi, phiPrime, spotFwd, strike, exerciseDates, forward, terminalvols, rvsFwd];
         elapsedEnd = DateObject[];
         elapsedFwd = QuantityMagnitude[DateDifference[elapsedStart, elapsedEnd, "Minute"]];
 
@@ -892,7 +900,7 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
           "outHoldValueBkwd"->outHoldValueBkwd, "outValueBkwd"->outValueBkwd,
           "outBetaFwd"->outBetaFwd, "outHoldValueFwd"->outHoldValueFwd, "outValueFwd"->outValueFwd, "outCashflowFwd"->outCashflowFwd, 
           "fcBarFwd"->fcBarFwd,"volBarFwd"->volBarFwd, "spotBkwd"->spotBkwd, "spotFwd"->spotFwd,
-          "elapsedBkwd"->elapsedBkwd, "elapsedFwd"->elapsedFwd}]
+          "elapsedBkwd"->elapsedBkwd, "elapsedFwd"->elapsedFwd, "notExercised"->notExercised}]
       ]
     ];
 
