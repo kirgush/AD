@@ -1,3 +1,5 @@
 (* Wolfram Language Test file *)
 
-TestSuite[{"TestAD.mt", "TestSFunctions.mt"}]
+dir = "Test";
+files = {"TestAD.mt", "TestSFunctions.mt"};
+TestSuite[FileNameJoin[{dir, #}] & /@ files];

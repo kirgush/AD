@@ -59,3 +59,15 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Wrong `eBar`, `hBar`.
   - Output all `values`.
   - ~~$\epsilon = 0$ doesn't work.~~ FIXED with taking care of `sdd`.
+  - no difference in `outCashflowFwd` using only values or unit sensitivities of forward beta 
+
+# Status
+
+  $\epsilon = 0$:
+
+      - match backward loop perfectly
+      - match only latest days {19, 20}
+
+  $\epsilon > 0$:
+
+      - bad match

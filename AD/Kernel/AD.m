@@ -497,9 +497,9 @@ backwardLoopValues[exerciseValue_, numeraire_, phi_] :=
         (* Use inverse *)
         (*outA[[day]] = Inverse[Outer[seqsum[#1 #2] &, aux, aux, 1, 1]];*)  (* nB x nB *)
         (* Don't use inverse *)
-        outA[[day]] = Outer[seqsum[#1 #2] &, aux, aux, 1, 1]; (* nB x nB *)
+        outA[[day]] = Outer[seqsum[#1 #2] / nMC &, aux, aux, 1, 1]; (* nB x nB *)
 
-        outB[[day]] = seqsum[numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal #] & /@ aux; (* nB *)
+        outB[[day]] = seqsum[numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal # / nMC] & /@ aux; (* nB *)
 
         (* Change to `seqsum` if increasing nB *)
         (*beta = Dot[outAm1[[day]], outB[[day]]]; (* nB *)*)
@@ -718,7 +718,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       (*xBar = xBar + hBar MapThread[seqsum[#1 #2] &, {beta, Transpose[phiPrime, {3, 2, 1}][[1 ;; nE - 1]]}];*)
 
-      Amat = Transpose[Outer[seqsum[#1 #2]&, phi[[All, All, 1 ;; nE - 1]], phi[[All, All, 1 ;; nE - 1]], 1, 1], {2, 3, 1}]; (* nE-1 x nB x nB *)
+      Amat = Transpose[Outer[seqsum[#1 #2] / nMC &, phi[[All, All, 1 ;; nE - 1]], phi[[All, All, 1 ;; nE - 1]], 1, 1], {2, 3, 1}]; (* nE-1 x nB x nB *)
 
       bBar = LinearSolve[Sequence @@ #] & /@ Transpose[{Amat, betaBar}];
 
@@ -734,7 +734,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       (*value = MapThread[sm[#1 - #2, $eps] &, {exerciseValue, contValue}, {2}];*)
       value = contValue + sm[exerciseValue - contValue, $eps];
 
-      Bvec = Transpose[seqsum[Transpose[numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]]] #] & /@ phi[[All, All, 1 ;; nE - 1]]];
+      Bvec = Transpose[seqsum[Transpose[numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]]] # / nMC] & /@ phi[[All, All, 1 ;; nE - 1]]];
 
       (*Bvec = seqsum[#] & /@ (numeraire[[1 ;; nE - 1]] / numeraire[[2 ;; nE]] * value[[2 ;; nE]] phi[[All, All, 1 ;; nE - 1]]);*)
 
