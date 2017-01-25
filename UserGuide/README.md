@@ -42,6 +42,7 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Binary relation of `ad` objects.
   - Equality of `ad` objects.
   - Derivatives of `ad` objects. They cannot be derived from the `ad` object itself.
+  - Can one find a transformation after which the sensitivities can be calculated in parallel over exercise days ? 
 
 
 # Bugs
@@ -59,7 +60,7 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Wrong `eBar`, `hBar`.
   - Output all `values`.
   - ~~$\epsilon = 0$ doesn't work.~~ FIXED with taking care of `sdd`.
-  - no difference in `outCashflowFwd` using only values or unit sensitivities of forward beta 
+  - no difference in `outCashflowFwd` using only values or unit sensitivities of forward beta
 
 # Status
 
