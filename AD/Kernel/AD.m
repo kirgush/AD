@@ -253,7 +253,7 @@ cSimulationSpot =
 	Compile[{{fc, _Real, 1}, {termVol, _Real, 1}, {rvs, _Real, 2}}, Exp[Log[fc]- 1/2 termVol^2 + termVol #] & /@ rvs,
 	CompilationTarget->"C"];
 
-$eps = 0.0005;
+$eps = 0;
 
 sdd[x_ /; Dimensions[x]=={}, 0] := 0;
 sdd[ad[0|0., _Association], 0] := 0;
@@ -284,6 +284,7 @@ smp[x_, \[Epsilon]_] = 1/2 Erfc[-(x / (2 Sqrt[\[Epsilon]]))];
 (*vf[x_, y_, z_] := (y + sm[x - y, $eps]) stheta[x - y, $eps] + z stheta[y - x, $eps];*)
 
 payoffBermudan[s_, strike_] := sm[s - strike, $eps];
+
 payoffBermudanPrime[s_ /; Dimensions[s]=={}, strike_] := 
 	Which[s - strike == 0, 0, 
 		  $eps == 0, HeavisideTheta[s - strike], 

@@ -178,6 +178,6 @@ Below refers to: `nE=20`, `nB=5` `sigma=0.45`.
 |`bkwd`|`fwd`|`lsmc`|$\varepsilon$|comment|
 |:-----|:----|:-----|:---------|:------|
 |!["5000_no_ad_3_itm_full_0_bkwd"][5000_no_ad_3_itm_full_0_bkwd]|!["5000_no_ad_3_itm_full_0_fwd"][5000_no_ad_3_itm_full_0_fwd]|True|0|2min|
-|!["5000_no_ad_3_itm_full_0_0005_bkwd"][5000_no_ad_3_itm_full_0_0005_bkwd]|!["5000_no_ad_3_itm_full_0_0005_fwd"][5000_no_ad_3_itm_full_0_0005_fwd]|True|0.0005|min|
+|!["5000_no_ad_3_itm_full_0_0005_bkwd"][5000_no_ad_3_itm_full_0_0005_bkwd]|!["5000_no_ad_3_itm_full_0_0005_fwd"][5000_no_ad_3_itm_full_0_0005_fwd]|True|0.0005|17min|
 |!["5000_no_ad_3_itm_full_0_005_bkwd"][5000_no_ad_3_itm_full_0_005_bkwd]|!["5000_no_ad_3_itm_full_0_005_fwd"][5000_no_ad_3_itm_full_0_005_fwd]|True|0.005|16min|
 |!["5000_no_ad_3_itm_full_0_05_bkwd"][5000_no_ad_3_itm_full_0_05_bkwd]|!["5000_no_ad_3_itm_full_0_05_fwd"][5000_no_ad_3_itm_full_0_05_fwd]|True|0.05|1.4min|
