@@ -253,7 +253,7 @@ cSimulationSpot =
 	Compile[{{fc, _Real, 1}, {termVol, _Real, 1}, {rvs, _Real, 2}}, Exp[Log[fc]- 1/2 termVol^2 + termVol #] & /@ rvs,
 	CompilationTarget->"C"];
 
-$eps = 0;
+$eps = 0.0005;
 
 sdd[x_ /; Dimensions[x]=={}, 0] := 0;
 sdd[ad[0|0., _Association], 0] := 0;
@@ -774,7 +774,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
       HmE, thetaHgE, deltaHgE},
 
       (* Strip input beta of the `ad` structure *)
-      localBeta = beta[[All, All, 1]];
+      localBeta = If[Head[beta[[1, 1]]]===ad, beta[[All, All, 1]], beta];
 
       {nB, nMC, nE} = Dimensions[phi];
 
@@ -832,6 +832,10 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
  
 	  aux = Transpose[hBar[[1 ;; nE - 1]]];
 	  betaBar = Transpose[seqsum[aux #] & /@ phi[[All, All, 1 ;; nE - 1]]]; (* nE-1 x nB *)
+	  
+	  (* zero betaBar *)
+	  (*betaBar = ConstantArray[0, Dimensions[betaBar]];*)
+	 
 	  xBar[[1;;nE-1]] += hBar[[1;;nE-1]] Transpose[(seqsum[Transpose[beta] #] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {2, 1, 3}])];
 
       (* TODO: this can be an output, no propagation ? *)
