@@ -71,7 +71,7 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
   $\epsilon > 0$:
 
-      - bad match
+      - bad match; agreement only with intrinsic and 3 ITM
 
 # Performance tests
 
