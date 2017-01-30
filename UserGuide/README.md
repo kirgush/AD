@@ -42,7 +42,7 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Binary relation of `ad` objects.
   - Equality of `ad` objects.
   - Derivatives of `ad` objects. They cannot be derived from the `ad` object itself.
-  - Can one find a transformation after which the sensitivities can be calculated in parallel over exercise days ? 
+  - Can one find a transformation after which the sensitivities can be calculated in parallel over exercise days ?
 
 
 # Bugs
@@ -54,10 +54,10 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
     - ~~Can one define the derivatives~~ ? Used alternative approach.
 
-  - Double check `stheta` at 0 in $\Theta(\mu - 1)$ and $\Theta(\mu - m)$.
+  - ~~Double check `stheta` at 0 in $\Theta(\mu - 1)$ and $\Theta(\mu - m)$~~. DONE
   - Need the values on the forward loop as well ? Yes.
   - ~~Wrong `dndE`.~~ FIXED
-  - Wrong `eBar`, `hBar`.
+  - ~~Wrong `eBar`, `hBar`~~. FIXED
   - Output all `values`.
   - ~~$\epsilon = 0$ doesn't work.~~ FIXED with taking care of `sdd`.
   - no difference in `outCashflowFwd` using only values or unit sensitivities of forward beta
@@ -71,4 +71,113 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
   $\epsilon > 0$:
 
-      - bad match
+      - bad match; agreement only with intrinsic and 3 ITM
+
+# Performance tests
+
+## Intrinsic
+Below refers to: `nE=20`, `nB=5` `sigma=0.0045`.
+
+[40_bkwd]: results_40_bkwd.png
+[40_fwd]: results_40_fwd.png
+[1000_bkwd]: results_1000_bkwd.png
+[1000_fwd]: results_1000_fwd.png
+[1000_no_ad_bkwd]: results_1000_no_ad_bkwd.png
+[1000_no_ad_fwd]: results_1000_no_ad_fwd.png
+[10000_no_ad_bkwd]: results_10000_no_ad_bkwd.png
+[10000_no_ad_fwd]: results_10000_no_ad_fwd.png
+[30000_no_ad_bkwd]: results_30000_no_ad_bkwd.png
+[30000_no_ad_fwd]: results_30000_no_ad_fwd.png
+
+|`nMC`|`elapsed bkwd`|`elapsed fwd`|
+|----:|-------------:|------------:|
+|40|1.2|0.3|
+|1000|351|6.2|
+|40 no `ad`|0.1|0.75|
+|1000 no `ad`|0.38|0.04|
+|10000 no `ad`|3.8|0.4|
+|30000 no `ad`|12.3|1.1|
+
+### `nMC=40`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["40_bkwd"][40_bkwd]|!["40_fwd"][40_fwd]|
+
+### `nMC=1000`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["1000_bkwd"][1000_bkwd]|!["1000_fwd"][1000_fwd]|
+|!["1000_no_ad_bkwd"][1000_no_ad_bkwd]|!["1000_no_ad_fwd"][1000_no_ad_fwd]|
+
+### `nMC=10000`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["10000_no_ad_bkwd"][10000_no_ad_bkwd]|!["10000_no_ad_fwd"][10000_no_ad_fwd]|
+
+### `nMC=30000`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["30000_no_ad_bkwd"][30000_no_ad_bkwd]|!["30000_no_ad_fwd"][30000_no_ad_fwd]|
+
+## Full
+Below refers to: `nE=20`, `nB=5` `sigma=0.45`.
+
+[1000_no_ad_full_bkwd]: results_1000_no_ad_full_bkwd.png
+[1000_no_ad_full_fwd]: results_1000_no_ad_full_fwd.png
+[10000_no_ad_full_bkwd]: results_10000_no_ad_full_bkwd.png
+[10000_no_ad_full_fwd]: results_10000_no_ad_full_fwd.png
+[30000_no_ad_full_bkwd]: results_30000_no_ad_full_bkwd.png
+[30000_no_ad_full_fwd]: results_30000_no_ad_full_fwd.png
+[30000_no_ad_full_no_lsmc_bkwd]: results_30000_no_ad_full_no_lsmc_bkwd.png
+[30000_no_ad_full_no_lsmc_fwd]: results_30000_no_ad_full_no_lsmc_fwd.png
+[30000_no_ad_full_ATM_bkwd]: results_30000_no_ad_full_ATM_bkwd.png
+[30000_no_ad_full_ATM_fwd]: results_30000_no_ad_full_ATM_fwd.png
+[30000_no_ad_full_ATM_no_lsmc_bkwd]: results_30000_no_ad_full_ATM_no_lsmc_bkwd.png
+[30000_no_ad_full_ATM_no_lsmc_fwd]: results_30000_no_ad_full_ATM_no_lsmc_fwd.png
+
+### `nMC=1000`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["1000_no_ad_full_bkwd"][1000_no_ad_full_bkwd]|!["1000_no_ad_full_fwd"][1000_no_ad_full_fwd]|
+
+### `nMC=10000`
+
+|`bkwd`|`fwd`|
+|:-----|:----|
+|!["10000_no_ad_full_bkwd"][10000_no_ad_full_bkwd]|!["10000_no_ad_full_fwd"][10000_no_ad_full_fwd]|
+
+### `nMC=30000`
+
+|`bkwd`|`fwd`|`lsmc`|comment|
+|:-----|:----|:-----|:------|
+|!["30000_no_ad_full_bkwd"][30000_no_ad_full_bkwd]|!["30000_no_ad_full_fwd"][30000_no_ad_full_fwd]|True|3 ITM|
+|!["30000_no_ad_full_no_lsmc_bkwd"][30000_no_ad_full_no_lsmc_bkwd]|!["30000_no_ad_full_fwd"][30000_no_ad_full_no_lsmc_fwd]|False|3 ITM|
+|!["30000_no_ad_full_ATM_bkwd"][30000_no_ad_full_ATM_bkwd]|!["30000_no_ad_full_ATM_fwd"][30000_no_ad_full_ATM_fwd]|True|ATM|
+|!["30000_no_ad_full_ATM_no_lsmc_bkwd"][30000_no_ad_full_ATM_no_lsmc_bkwd]|!["30000_no_ad_full_ATM_fwd"][30000_no_ad_full_ATM_no_lsmc_fwd]|False|ATM|
+
+### `nMC=5000`
+
+[5000_no_ad_3_itm_full_0_bkwd]: results_5000_no_ad_3_itm_full_0_bkwd.png
+[5000_no_ad_3_itm_full_0_fwd]: results_5000_no_ad_3_itm_full_0_fwd.png
+[5000_no_ad_3_itm_full_0_0005_bkwd]: results_5000_no_ad_3_itm_full_0_0005_bkwd.png
+[5000_no_ad_3_itm_full_0_0005_fwd]: results_5000_no_ad_3_itm_full_0_0005_fwd.png
+[5000_no_ad_3_itm_full_0_005_bkwd]: results_5000_no_ad_3_itm_full_0_005_bkwd.png
+[5000_no_ad_3_itm_full_0_005_fwd]: results_5000_no_ad_3_itm_full_0_005_fwd.png
+[5000_no_ad_3_itm_full_0_05_bkwd]: results_5000_no_ad_3_itm_full_0_05_bkwd.png
+[5000_no_ad_3_itm_full_0_05_fwd]: results_5000_no_ad_3_itm_full_0_05_fwd.png
+
+[5000_no_ad_3_itm_full_no_lsmc_0]: results_5000_no_ad_3_itm_full_no_lsmc_0.png
+[5000_no_ad_3_itm_full_no_lsmc_0_005]: results_5000_no_ad_3_itm_full_no_lsmc_0_005.png
+
+
+|`bkwd`|`fwd`|`lsmc`|$\varepsilon$|comment|
+|:-----|:----|:-----|:---------|:------|
+|!["5000_no_ad_3_itm_full_0_bkwd"][5000_no_ad_3_itm_full_0_bkwd]|!["5000_no_ad_3_itm_full_0_fwd"][5000_no_ad_3_itm_full_0_fwd]|True|0|2min|
+|!["5000_no_ad_3_itm_full_0_0005_bkwd"][5000_no_ad_3_itm_full_0_0005_bkwd]|!["5000_no_ad_3_itm_full_0_0005_fwd"][5000_no_ad_3_itm_full_0_0005_fwd]|True|0.0005|17min|
+|!["5000_no_ad_3_itm_full_0_005_bkwd"][5000_no_ad_3_itm_full_0_005_bkwd]|!["5000_no_ad_3_itm_full_0_005_fwd"][5000_no_ad_3_itm_full_0_005_fwd]|True|0.005|16min|
+|!["5000_no_ad_3_itm_full_0_05_bkwd"][5000_no_ad_3_itm_full_0_05_bkwd]|!["5000_no_ad_3_itm_full_0_05_fwd"][5000_no_ad_3_itm_full_0_05_fwd]|True|0.05|1.4min|
