@@ -798,7 +798,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
 
       (*vBar[[1]] = ConstantArray[1, nMC];*)
 
-      contValue[[1 ;; nE - 1, 1 ;; nMC]] = MapThread[seqsum[#1 #2] &, {localBeta, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
+      contValue[[1 ;; nE - 1]] = MapThread[seqsum[#1 #2] &, {localBeta, Transpose[phi[[All, All, 1 ;; nE - 1]], {2, 3, 1}]}]; (* nE-1 x nMC *)
 
       HmE = contValue - exerciseValue;
       thetaHgE = stheta[HmE, $eps]; (* nE x nMC *)
@@ -812,7 +812,7 @@ forwardLoopValuesAndSensitivities[exerciseValue_, numeraire_, beta_, phi_, phiPr
           Table[
             Which[day == 1 || m >= day, ConstantArray[0, nMC],
               day == 2 && m == 1, -deltaHgE[[m]],
-              True, -deltaHgE[[m]] * seqprod[thetaHgE[[Drop[Range[1, day - 1], {m}]]]]], {day, 1, nE}, {m, 1, nE}];(* nE \mu x nE m x nMC *)
+              True, -deltaHgE[[m]] seqprod[thetaHgE[[Drop[Range[1, day - 1], {m}]]]]], {day, 1, nE}, {m, 1, nE}];(* nE \mu x nE m x nMC *)
 
       (*dndE =
           Table[-deltaHgE[[m]] * seqprod[thetaHgE[[Drop[Range[1, day - 1], {m}]]]], {day, 2, nE}, {m, 1, day-1}]; (* nE \mu x nE m x nMC *)*)
@@ -968,7 +968,6 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
 
         numeraire = Transpose[Exp[ir * exerciseDates] & /@ Range[nMC]]; (*nE x nMC*)
 
-        (* FIXED: Assuming one factor *)
         (*basisFunctionsPrime = Function[x, Evaluate@Derivative[1][basisFunctions][x]];*)
         (*basisFunctionsPrime = Function[\[FormalY], Derivative[1][basisFunctions][\[FormalY]]];*)
         basisFunctionsPrime = Function[x, {0 x , 1 x, 2 x, 3 x^2, 4 x^3}[[1 ;; nB]]];
