@@ -206,3 +206,5 @@ Example valuation:
   - Use functions with mixed arguments, `ad` and numeric.
   - Template for derivatives: it needs a smarter levelspec. Need to use `Derivative` because arguments can be numeric.
   - Need to store all intermediate steps as named variables in order to avoid duplications ?
+  - Need to consider `Union[argsAAD]` in order to avoid double counting ? Is a default way of combining `Association`s acting to properly add the sensitivities ?
+  - Replace `Derivative` with `D` after substitution ?
