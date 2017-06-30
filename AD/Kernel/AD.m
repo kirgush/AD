@@ -63,6 +63,11 @@ backwardLoopValues::usage="";
 backwardLoopSensitivities::usage="";
 backwardLoopSensitivitiesNew::usage="";
 
+aad::usage="";
+calcSensitivityOnePath::usage="";
+calcSensitivity::usage="";
+calcSensitivityOneVariable::usage="";
+
 
 Begin["`Private`"]
 (* Implementation of the package *)
@@ -1010,6 +1015,45 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
           "elapsedBkwd" -> elapsedBkwd, "elapsedFwd" -> elapsedFwd, "notExercised" -> notExercised}]
       ]
     ];
+
+
+(* AAD section *)
+
+aad /: f_[aad, args___ ] := 
+ Module[{argsAAD, nAAD, argsAADCopy, vars, out, posAAD, argsCopy, 
+   argsTemplate, jac, childVertex},
+  argsAAD = Cases[{args}, aad[_, _], Infinity];
+  nAAD = Length[argsAAD];
+  argsAADCopy = Symbol["xyz" ~~ ToString[#]] & /@ Range[nAAD];
+  vars = Replace[{args},  
+    aad[\[FormalX]_, \[FormalY]_] -> \[FormalY], Infinity];
+  out = f[Sequence @@ vars];
+  posAAD = Position[{args}, aad][[All, 1 ;; -2]];
+  argsCopy = 
+   Replace[{args}, Thread[argsAAD -> argsAADCopy],  Infinity];
+  argsTemplate = Replace[argsCopy, _ -> 0, {-1}];
+  jac = Derivative[Sequence @@ #][f][
+      Sequence @@ vars] & /@ (ReplacePart[argsTemplate, # -> 1] & /@ 
+      posAAD);
+  jac = Apply[Association, Thread[argsAAD[[All, 1]] -> jac]];
+  $vertexCount++;
+  childVertex = "v" <> ToString[$vertexCount];
+  $graph = 
+   EdgeAdd[$graph, 
+    Thread[childVertex \[DirectedEdge] argsAAD[[All, 1]]]];
+  AssociateTo[$tape, childVertex -> jac];
+  $tape = DeleteCases[$tape, _ -> Association[]];
+  aad[childVertex, out]
+  ] 
+
+calcSensitivityOnePath[tape_, path_] := Apply[Times, tape[#[[1]]][#[[2]]] & /@ Partition[path, 2, 1]]
+calcSensitivityOneVariable[tape_, paths_] := Association[paths[[1, -1]] -> Total[calcSensitivityOnePath[tape, #] & /@ paths]]
+calcSensitivity[graph_, tape_, vars_, outVertex_] := 
+	Module[{paths}, 
+	paths = DeleteCases[FindPath[graph, outVertex, #, Infinity, All] & /@ vars[[All, 1]], {}];
+	Apply[Join, calcSensitivityOneVariable[tape, #] & /@ paths]
+	]
+
 
 End[];
 
