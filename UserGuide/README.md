@@ -181,3 +181,30 @@ Below refers to: `nE=20`, `nB=5` `sigma=0.45`.
 |!["5000_no_ad_3_itm_full_0_0005_bkwd"][5000_no_ad_3_itm_full_0_0005_bkwd]|!["5000_no_ad_3_itm_full_0_0005_fwd"][5000_no_ad_3_itm_full_0_0005_fwd]|True|0.0005|17min|
 |!["5000_no_ad_3_itm_full_0_005_bkwd"][5000_no_ad_3_itm_full_0_005_bkwd]|!["5000_no_ad_3_itm_full_0_005_fwd"][5000_no_ad_3_itm_full_0_005_fwd]|True|0.005|16min|
 |!["5000_no_ad_3_itm_full_0_05_bkwd"][5000_no_ad_3_itm_full_0_05_bkwd]|!["5000_no_ad_3_itm_full_0_05_fwd"][5000_no_ad_3_itm_full_0_05_fwd]|True|0.05|1.4min|
+
+
+# Working with the graph
+
+Example valuation:
+
+![](tape_example.png "Example valuation")
+
+  - How to represent an array or matrix ?
+  - ~~Should a vertex contain information about the jacobian ?~~
+  - ~~How to programmatically add verices at each calculation ?~~
+
+    - ~~Use a random number or symbol ?~~
+  - How to reconstruct the full jacobian for each output ?
+
+    - Need to keep track of variables at each node as well ?
+
+  - Generalise `AD` to arbitrary number of inputs ?
+  - Use `VertexCapacity`, `EdgeCapacity` to embed tape in graph ?
+  - As all Jacobians need to be evaluated, is the gain in `AD` coming from a more efficient usage of matrix multiplication ?
+  - How to handle functions containinig a parameter which one wished to consider a constant ?
+  - How to find all input and output vertices ?
+  - Use functions with mixed arguments, `ad` and numeric.
+  - Template for derivatives: it needs a smarter levelspec. Need to use `Derivative` because arguments can be numeric.
+  - Need to store all intermediate steps as named variables in order to avoid duplications ?
+  - Need to consider `Union[argsAAD]` in order to avoid double counting ? Is a default way of combining `Association`s acting to properly add the sensitivities ?
+  - Replace `Derivative` with `D` after substitution ?
