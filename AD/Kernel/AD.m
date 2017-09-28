@@ -202,7 +202,7 @@ fd /: c_?NumericQ + fd[x_, y_Association] := fd[c + x, y];
 fd /: c_?NumericQ fd[x_, y_Association] := fd[c x, Association[KeyValueMap[#1 -> c #2 &, y]]];
 (* TODO: The conjugate of an expressions keeps the same sensitivities *)
 fd /: Conjugate[fd[x_, y_Association]] := fd[Conjugate[x], y];
-fd /: Power[fd[x_, y_Association], 0] := fd[1, Association[KeyValueMap[#1 -> 0 &, y]]];
+fd /: Power[fd[_, y_Association], 0] := fd[1, Association[KeyValueMap[#1 -> 0 &, y]]];
 fd /: Power[fd[x_, y_Association], n_?NumericQ] := fd[x^n, Association[KeyValueMap[#1-> n x^(n-1) #2 &, y]]];
 (*fd /: Power[a_?NumericQ, fd[x_, y_Association]] := fd[a^x, propagatefd[a^# &, x, y]];*)
 fd /: Power[a_?NumericQ, fd[x_, y_Association]] := fd[a^x, Association[KeyValueMap[#1 -> a^x Log[a] #2 &, y]]];
@@ -215,8 +215,8 @@ fd /: Log[fd[expr_, y_Association]] := fd[Log[expr], Association[KeyValueMap[#1 
 fd /: Erf[fd[expr_, y_Association]] := fd[Erf[expr], Association[KeyValueMap[#1 -> 2 Exp[-expr^2] / Sqrt[Pi] #2 &, y]]];
 fd /: Erfc[fd[expr_, y_Association]] := fd[Erfc[expr], Association[KeyValueMap[#1 -> -2 Exp[-expr^2] / Sqrt[Pi] #2 &, y]]];
 fd /: UnitStep[fd[expr_, y_Association]] := fd[UnitStep[expr], y]; (* TODO: double check *)
-fd /: HeavisideTheta[fd[0, y_Association]] := 0;(*fd[0, y];*) (* TODO: double check *)
-fd /: HeavisideTheta[fd[expr_, y_Association]] := HeavisideTheta[expr]; (*fd[HeavisideTheta[expr], y];*) (* TODO: double check *)
+fd /: HeavisideTheta[fd[0, _Association]] := 0;(*fd[0, y];*) (* TODO: double check *)
+fd /: HeavisideTheta[fd[expr_, _Association]] := HeavisideTheta[expr]; (*fd[HeavisideTheta[expr], y];*) (* TODO: double check *)
 fd /: Max[fd[expr_, y_Association], a_?NumericQ] := If[expr - a >= 0, fd[expr, y], a];
 fd /: Max[a_?NumericQ, fd[expr_, y_Association]] := If[expr - a >= 0, fd[expr, y], a];
 fd /: Max[fd[expr1_, y1_Association], fd[expr2_, y2_Association]] := If[expr1 >= expr2, fd[expr1, y1], fd[expr2, y2]];
@@ -227,10 +227,10 @@ fd /: Max[fd[expr1_, y1_Association], fd[expr2_, y2_Association]] := If[expr1 >=
 (*fd /: s_[fd[x_, y_Association]] /; MemberQ[mathSymbolsOne, s] := fd[s[x], propagatefd[s, x, y]];*)
 fd /: s_[fd[x1_, y1_Association], fd[x2_, y2_Association]] /; MemberQ[mathSymbolsTwo, s] :=
 	fd[s[x1, x2], propagatefd[s[#1, #2] &, {x1, x2}, {y1, y2}]];
-fd /: s_[fd[expr_, y_Association], a_?NumericQ] /; MemberQ[mathComparison, s] := s[expr, a];
-fd /: s_[fd[expr1_, y1_Association], fd[expr2_, y2_]] /; MemberQ[mathBinary, s] := s[expr1, expr2];
-fd /: s_[fd[expr_, y_Association], z_] /; MemberQ[mathBinary, s] := s[expr, z];
-fd /: s_[z_, fd[expr_, y_Association]] /; MemberQ[mathBinary, s] := s[z, expr];
+fd /: s_[fd[expr_, _Association], a_?NumericQ] /; MemberQ[mathComparison, s] := s[expr, a];
+fd /: s_[fd[expr1_, _Association], fd[expr2_, _]] /; MemberQ[mathBinary, s] := s[expr1, expr2];
+fd /: s_[fd[expr_, _Association], z_] /; MemberQ[mathBinary, s] := s[expr, z];
+fd /: s_[z_, fd[expr_, _Association]] /; MemberQ[mathBinary, s] := s[z, expr];
 
 (* Generic propagation 1D *)
 fd /: func_[arg_fd] := fd[func[toValue[arg]], propagatefd[func, toValue[arg], toSensitivity[arg]]];
