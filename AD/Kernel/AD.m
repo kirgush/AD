@@ -12,7 +12,19 @@ sumKeyUnion::usage="";
 makePartial::usage="";
 propagatefd::usage="";
 fd::usage="";
-toValue::usage="";
+toValue::usage="Returns the value of an fd object.
+	Example:
+	
+	toValue[fd[1.23, <|x1->y1|>]]
+	1.23
+";
+toSensitivity::usage="Returns the sensitivity of an fd object.
+	
+	Example:
+	
+	toSensitivity[fd[1.23, <|x1->y1|>]]
+	<|x1->y1|>
+";
 seqsum::usage="Recursive total to overcome slowness of built-in Total on `fd` objects.
 It sums over the first dimension of arrays.
   Example:
@@ -68,6 +80,7 @@ calcSensitivityOnePath::usage="";
 calcSensitivity::usage="";
 calcSensitivityOneVariable::usage="";
 
+mySin::usage="Fix 1D";
 
 Begin["`Private`"];
 (* Implementation of the package *)
@@ -165,10 +178,15 @@ makePartial[s_, expr_, pos_] := Apply[s][ReplacePart[expr, pos->#]] &;
 (* TODO: make it work with arrays *)
 (* One variable *)
 (* Check of factor is zero before performing derivative ? *)
+
 propagatefd /: propagatefd[s_, expr_, assoc_Association] :=
 	With[{local=D[s[\[FormalZ]], \[FormalZ]] /. \[FormalZ] -> expr}, 
-	Association[KeyValueMap[#1 -> #2 local &, assoc]]
+		Association[KeyValueMap[#1 -> #2 local &, assoc]]
 	];
+(*propagatefd /: propagatefd[s_, expr_, assoc_Association] :=
+	With[{local=Derivative[1][s][expr]}, 
+	Association[KeyValueMap[#1 -> #2 local &, assoc]]
+	];*)
 propagatefd /: propagatefd[s_, expr_List, assoc_List] :=
 	Merge[Map[propagatefd[makePartial[s, expr, #], expr[[#]], assoc[[#]]] &, Range[Length[expr]]], Total];
 
@@ -177,6 +195,9 @@ fd /: fd[x_] := Undefined;
 fd /: fd[x_, y_/;UnsameQ[Head[y], Association]] := Undefined;*)
 (*fd[x_, y_] /; Not[MatchQ[{x, y}, {_Real, _Association}]] := \
 Throw[$Failed, fd]*)
+fd /: toValue[z_fd] := z[[1]];
+toValue[z_] := z;
+fd /: toSensitivity[z_fd] := z[[2]];
 fd /: c_?NumericQ + fd[x_, y_Association] := fd[c + x, y];
 fd /: c_?NumericQ fd[x_, y_Association] := fd[c x, Association[KeyValueMap[#1 -> c #2 &, y]]];
 (* TODO: The conjugate of an expressions keeps the same sensitivities *)
@@ -211,7 +232,16 @@ fd /: s_[fd[expr1_, y1_Association], fd[expr2_, y2_]] /; MemberQ[mathBinary, s] 
 fd /: s_[fd[expr_, y_Association], z_] /; MemberQ[mathBinary, s] := s[expr, z];
 fd /: s_[z_, fd[expr_, y_Association]] /; MemberQ[mathBinary, s] := s[z, expr];
 
-toValue[z_?fd] := z[[1]];
+(* Generic propagation 1D *)
+fd /: func_[arg_fd] := fd[func[toValue[arg]], propagatefd[func, toValue[arg], toSensitivity[arg]]];
+
+(* fd /: s_[args__] := 
+	Module[{localArgs=List@@args, posfd, sens}, 
+		posfd=Position[localArgs, _fd];
+		sens=Merge[propagatefd[makePartial[s, localArgs, #[[1]]], localArgs[[#[[1]], 2]]] & /@ posfd, Total];
+		fd[s[Sequence @@ (Map[toValue, args])], sens]
+		]; *)
+
 
 (* TODO: introduce levelspec *)
 seqsum[arg_List] :=
@@ -1018,6 +1048,7 @@ regressionCoefficientAndSensitivityBothLoopsNew[exerciseDates_, forward_, vols_,
 
 (* AAD section *)
 
+(*
 aad /: f_[aad, args___ ] := 
  Module[{argsAAD, nAAD, argsAADCopy, vars, out, posAAD, argsCopy, 
    argsTemplate, jac, childVertex},
@@ -1052,7 +1083,7 @@ calcSensitivity[graph_, tape_, vars_, outVertex_] :=
 	paths = DeleteCases[FindPath[graph, outVertex, #, Infinity, All] & /@ vars[[All, 1]], {}];
 	Apply[Join, calcSensitivityOneVariable[tape, #] & /@ paths]
 	];
-
+*)
 
 End[];
 

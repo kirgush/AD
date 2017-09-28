@@ -32,6 +32,10 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
 # Issues
 
+  - Check values $y_1, y_2$ inside dependencies `<|` $x_1 \longrightarrow y_1, x_2 \longrightarrow y_2$`|>` and drop the ones smaller than a cutoff ? 
+
+## FD
+
   - Look into poor performance on larger lists.
   - Introduce helper propagation for complex functions ?
   - Manual calculation of sensitivities requires the full `rvs`.
@@ -44,6 +48,7 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
   - Derivatives of `ad` objects. They cannot be derived from the `ad` object itself.
   - Can one find a transformation after which the sensitivities can be calculated in parallel over exercise days ?
 
+## AD
 
 # Bugs
 
