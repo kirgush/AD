@@ -2,6 +2,14 @@
 
 Test[fd[1.23, 5.67], fd[1.23, 5.67], TestID -> "Test-20161118-P0Q2X8"];
 
+Test[toValue[fd[3 + x1, <|x1 -> y1|>]], 3 + x1
+	,
+	TestID->"TestAD-20170928-G2I0C4"]
+
+Test[toSensitivity[fd[3 + x1, <|x1 -> y1, t2->u2|>]], <|x1 -> y1, t2->u2|>
+	,
+	TestID->"TestAD-20170928-Q2H5O5"]
+
 Test[fd[x1, <|x1 -> y1|>] + 3, fd[3 + x1, <|x1 -> y1|>], TestID -> "Test-20161118-Q8Y0I2"];
 
 Test[-2 fd[x1, <|x1 -> y1|>], fd[-2 x1, <|x1 -> -2 y1|>]
