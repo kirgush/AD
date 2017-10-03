@@ -32,9 +32,15 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
 
 # Issues
 
-  - Check values $y_1, y_2$ inside dependencies `<|` $x_1 \longrightarrow y_1, x_2 \longrightarrow y_2$`|>` and drop the ones smaller than a cutoff ? 
+  - Check values $y_1, y_2$ inside dependencies `<|` $x_1 \longrightarrow y_1, x_2 \longrightarrow y_2$`|>` and drop the ones smaller than a cutoff ?
 
 ## FD
+
+  - ~~Use **`Hold*`** to handle infinite recursions ?~~ Apply propagation only to **Numericfunction**s.
+  - ~~Define **`toValue`** inside functions when needed (**`If[Head[#]===fd, #[[1]], #] &`**) ?~~ **`toValue`** not a **Numericfunction**.
+  - The application of generic functions must be limited (to **NumericFunction**s ?).
+
+## AD
 
   - Look into poor performance on larger lists.
   - Introduce helper propagation for complex functions ?
@@ -43,12 +49,10 @@ Do we want to build an independent LSMC engine `Algorithmic Adjoint Differentiat
       - Does this make the calculation of the regression coefficients model dependent ?
       - Would that imply doing backward loop and valuation of the regression coefficients at the same time ?
   - Abstract object: things that are needed to make a decision at a given time step.
-  - Binary relation of `ad` objects.
-  - Equality of `ad` objects.
-  - Derivatives of `ad` objects. They cannot be derived from the `ad` object itself.
+  - Binary relation of **`ad`** objects.
+  - Equality of **`ad`** objects.
+  - Derivatives of **`ad`** objects. They cannot be derived from the **`ad`** object itself.
   - Can one find a transformation after which the sensitivities can be calculated in parallel over exercise days ?
-
-## AD
 
 # Bugs
 

@@ -1,3 +1,5 @@
+(* ::Package:: *)
+
 (* Wolfram Language Package *)
 
 (* Created by the Wolfram Workbench 14-Dec-2016 *)
@@ -42,6 +44,7 @@ It sums over the first dimension of arrays.
 ";
 seqprod::usage="Recursive total to overcome slowness of built-in Product on `fd` objects.";
 recursiveStatistics::usage="";
+stDev::usage="Returns the standard deviation of the list x, assumed to have all real elements";
 
 simulationSpot::usage="simulationSpot[fc, termVol, rvs] returns simulations of spot prices;
    fc: forward curve, a list of positive numbers with length nC;
@@ -80,7 +83,7 @@ calcSensitivityOnePath::usage="";
 calcSensitivity::usage="";
 calcSensitivityOneVariable::usage="";
 
-mySin::usage="Fix 1D";
+$NumericFunction::usage="List of symbols with attribute NumericFunction";
 
 Begin["`Private`"];
 (* Implementation of the package *)
@@ -159,8 +162,13 @@ traceView4[expr_] :=
   ];
 SetAttributes[traceView4, {HoldAllComplete}];
 
-(*mathSymbolsOne = {Sin, Cos, Tan, Exp, Log, Erf, Erfc, Max};*)
+(*SetAttributes[smp, NumericFunction];*)
+$NumericFunction = Select[Names["*"], MemberQ[Attributes[#], NumericFunction] &];
+
+(*
+mathSymbolsOne = {Sin, Cos, Tan, Exp, Log, Erf, Erfc, Max};
 mathSymbolsTwo = {Power};
+*)
 mathComparison = {Equal, SameQ};
 mathBinary = {Greater, GreaterEqual, Less, LessEqual};
 
@@ -182,30 +190,40 @@ makePartial[s_, expr_, pos_] := Apply[s][ReplacePart[expr, pos->#]] &;
 propagatefd /: propagatefd[s_, expr_, assoc_Association] :=
 	With[{local=D[s[\[FormalZ]], \[FormalZ]] /. \[FormalZ] -> expr}, 
 		Association[KeyValueMap[#1 -> #2 local &, assoc]]
-	];
-(*propagatefd /: propagatefd[s_, expr_, assoc_Association] :=
+	];	
+(* Though more elegant this does not always work
+propagatefd /: propagatefd[s_, expr_, assoc_Association] :=
 	With[{local=Derivative[1][s][expr]}, 
 	Association[KeyValueMap[#1 -> #2 local &, assoc]]
-	];*)
+	];
+*)
+	
+(* Not needed after changes	of branch tackle_xD
 propagatefd /: propagatefd[s_, expr_List, assoc_List] :=
 	Merge[Map[propagatefd[makePartial[s, expr, #], expr[[#]], assoc[[#]]] &, Range[Length[expr]]], Total];
+*)
 
 (*fd /: fd[] := Undefined;
 fd /: fd[x_] := Undefined;
 fd /: fd[x_, y_/;UnsameQ[Head[y], Association]] := Undefined;*)
 (*fd[x_, y_] /; Not[MatchQ[{x, y}, {_Real, _Association}]] := \
 Throw[$Failed, fd]*)
-fd /: toValue[z_fd] := z[[1]];
-toValue[z_] := z;
-fd /: toSensitivity[z_fd] := z[[2]];
+
+(* The next x definitions need to be at the beginning of the `fd` block *)
+fd /: toValue[expr_fd] := expr[[1]];
+fd /: toSensitivity[expr_fd] := expr[[2]];
+
+(*
 fd /: c_?NumericQ + fd[x_, y_Association] := fd[c + x, y];
 fd /: c_?NumericQ fd[x_, y_Association] := fd[c x, Association[KeyValueMap[#1 -> c #2 &, y]]];
-(* TODO: The conjugate of an expressions keeps the same sensitivities *)
-fd /: Conjugate[fd[x_, y_Association]] := fd[Conjugate[x], y];
 fd /: Power[fd[_, y_Association], 0] := fd[1, Association[KeyValueMap[#1 -> 0 &, y]]];
 fd /: Power[fd[x_, y_Association], n_?NumericQ] := fd[x^n, Association[KeyValueMap[#1-> n x^(n-1) #2 &, y]]];
 (*fd /: Power[a_?NumericQ, fd[x_, y_Association]] := fd[a^x, propagatefd[a^# &, x, y]];*)
 fd /: Power[a_?NumericQ, fd[x_, y_Association]] := fd[a^x, Association[KeyValueMap[#1 -> a^x Log[a] #2 &, y]]];
+
+(* TODO: The conjugate of an expressions keeps the same sensitivities *)
+(* How to handle Conjugate' ? *)
+fd /: Conjugate[fd[x_, y_Association]] := fd[Conjugate[x], y];
 
 (* Explicit propagation for the most commonly used transformations *)
 fd /: fd[expr1_, y1_Association] + fd[expr2_, y2_Association] := fd[expr1 + expr2, Merge[{y1, y2}, Total]];
@@ -221,6 +239,8 @@ fd /: Max[fd[expr_, y_Association], a_?NumericQ] := If[expr - a >= 0, fd[expr, y
 fd /: Max[a_?NumericQ, fd[expr_, y_Association]] := If[expr - a >= 0, fd[expr, y], a];
 fd /: Max[fd[expr1_, y1_Association], fd[expr2_, y2_Association]] := If[expr1 >= expr2, fd[expr1, y1], fd[expr2, y2]];
 
+
+
 (* Generic propagation *)
 (*fd /: fd[expr1_, y1_] + fd[expr2_, y2_] := fd[expr1 + expr2, propagatefd[#1+#2 &, {expr1, expr2}, {y1, y2}]];*)
 (*fd /: fd[expr1_, y1_] fd[expr2_, y2_] := fd[expr1 expr2, propagatefd[#1 #2 &, {expr1, expr2}, {y1, y2}]];*)
@@ -228,20 +248,53 @@ fd /: Max[fd[expr1_, y1_Association], fd[expr2_, y2_Association]] := If[expr1 >=
 fd /: s_[fd[x1_, y1_Association], fd[x2_, y2_Association]] /; MemberQ[mathSymbolsTwo, s] :=
 	fd[s[x1, x2], propagatefd[s[#1, #2] &, {x1, x2}, {y1, y2}]];
 fd /: s_[fd[expr_, _Association], a_?NumericQ] /; MemberQ[mathComparison, s] := s[expr, a];
-fd /: s_[fd[expr1_, _Association], fd[expr2_, _]] /; MemberQ[mathBinary, s] := s[expr1, expr2];
-fd /: s_[fd[expr_, _Association], z_] /; MemberQ[mathBinary, s] := s[expr, z];
-fd /: s_[z_, fd[expr_, _Association]] /; MemberQ[mathBinary, s] := s[z, expr];
+*)
 
-(* Generic propagation 1D *)
-fd /: func_[arg_fd] := fd[func[toValue[arg]], propagatefd[func, toValue[arg], toSensitivity[arg]]];
+(* Basic properties and checks *)
+(*
+fd /: fd[] := Undefined
+fd /: fd[_] := Undefined;
+fd /: fd[_fd, _] :=Undefined;
+fd /: fd[_, y_/;UnsameQ[Head[y], Association]] := Undefined;
+*)
 
-(* fd /: s_[args__] := 
-	Module[{localArgs=List@@args, posfd, sens}, 
-		posfd=Position[localArgs, _fd];
-		sens=Merge[propagatefd[makePartial[s, localArgs, #[[1]]], localArgs[[#[[1]], 2]]] & /@ posfd, Total];
-		fd[s[Sequence @@ (Map[toValue, args])], sens]
-		]; *)
+(* Equality *)
+fd /: s_[expr1_fd, expr2_fd] /; MemberQ[mathComparison, s] := s[toValue[expr1], toValue[expr2]];
+fd /: s_[expr_fd, a_?NumericQ] /; MemberQ[mathComparison, s] := s[toValue[expr], a];
+fd /: s_[a_?NumericQ, expr_fd] /; MemberQ[mathComparison, s] := s[a, toValue[expr]];
 
+(* Binary relations *)
+fd /: s_[expr1_fd, expr2_fd] /; MemberQ[mathBinary, s] := s[toValue[expr1], toValue[expr2]];
+fd /: s_[expr_fd, z_] /; MemberQ[mathBinary, s] := s[toValue[expr], z];
+fd /: s_[z_, expr_fd] /; MemberQ[mathBinary, s] := s[z, toValue[expr]];
+
+(* Explicit propagation for some non-smooth transformations *)
+(*fd /: UnitStep[expr_fd] := fd[UnitStep[toValue[expr]], toSensitivity[expr]];*) (* TODO: double check *)
+fd /: UnitStep[expr_fd] := UnitStep[toValue[expr]]; 
+(*fd /: HeavisideTheta[expr_fd] /; toValue[expr]==0 := fd[0, toSensitivity[expr]];*)
+(*fd /: HeavisideTheta[expr_fd] := fd[HeavisideTheta[toValue[expr]], toSensitivity[expr]];*) 
+fd /: HeavisideTheta[expr_fd] := HeavisideTheta[toValue[expr]];
+fd /: DiracDelta[expr_fd] := DiracDelta[toValue[expr]]; 
+fd /: Max[expr_fd, a_?NumericQ] := If[expr >= a, expr, a];
+fd /: Max[a_?NumericQ, expr_fd] := If[a >= expr, a, expr];
+fd /: Max[expr1_fd, expr2_fd] := If[expr1 >= expr2, expr1, expr2];
+
+(* Generic propagation 1D for numeric functions *)
+fd /: func_[arg_fd] /; MemberQ[$NumericFunction, ToString[func]] := fd[func[arg[[1]]], propagatefd[func, arg[[1]], arg[[2]]]];
+
+(* Generic propagation xD for numeric functions *)
+fd /: func_[argsB___, arg_fd, argsA___] /; MemberQ[$NumericFunction, ToString[func]] := 
+    Module[ {allArgs, allArgs1, posfd, outValue, outSens},
+        allArgs = {argsB, arg, argsA};
+        allArgs1 = If[ Head[#]===fd,
+                       toValue[#],
+                       #
+                   ] & /@ allArgs;
+        posfd = Position[allArgs, _fd][[All, 1]];
+        outValue = func[Sequence @@ allArgs1];
+        outSens = Merge[propagatefd[makePartial[func, allArgs1, #], allArgs[[#, 1]], allArgs[[#, 2]]] & /@ posfd, Total];
+        fd[outValue, outSens]
+    ];
 
 (* TODO: introduce levelspec *)
 seqsum[arg_List] :=
@@ -274,6 +327,7 @@ recursiveStatistics[x_List] := Module[
 	{out / length, Sqrt[out2 / length - (out / length)^2] / Sqrt[length]}
 	];
 	
+stDev[x_?VectorQ] := Sqrt[(Mean[x^2] - Mean[x]^2) Length[x]/(Length[x] - 1)];
 
 (* TODO: improve performance *)
 (* Exp[Log[fc] - 1/2 termVol^2 + termVol #] & /@ rvs *)
@@ -291,14 +345,14 @@ cSimulationSpot =
 $eps = 0;
 
 sdd[x_ /; Dimensions[x]=={}, 0] := 0;
-sdd[fd[0|0., _Association], 0] := 0;
+sdd[fd[(0|0.), _Association], 0] := 0;
 sdd[x_ /; Dimensions[x]!={}, 0] := ConstantArray[0, Dimensions[x]];
 sdd[x_, \[Epsilon]_] := PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
-stheta[0|0., 0] := 0;
+stheta[(0|0.), 0] := 0;
 stheta[x_ /; Dimensions[x]!={} && SubsetQ[{0, 0.}, Union[Flatten[x]]], 0] := ConstantArray[0, Dimensions[x]];
-stheta[fd[0|0., _Association], 0] := 0;
-stheta[x_, 0] := HeavisideTheta[x] /. HeavisideTheta[0|0.]->0;
+stheta[fd[(0|0.), _Association], 0] := 0;
+stheta[x_, 0] := HeavisideTheta[x] /. HeavisideTheta[(0|0.)]->0;
 stheta[x_, \[Epsilon]_] := CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* Next two lines implementing elementwise Max *)
@@ -306,21 +360,21 @@ stheta[x_, \[Epsilon]_] := CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 sm[x_, 0] /; Dimensions[x]!={} := MapThread[Max[#1, #2]&, {x, ConstantArray[0, Dimensions[x]]}, Length[Dimensions[x]]];*)
 (* TODO: any clean way to do this ? *)
 (*sm[0|0., eps_] := 0;*) (* TODO: Why ? This is wrong *)
-sm[0|0., 0] := 0;
-sm[fd[0|0., _Association], 0] := 0;
-sm[x_, 0] := x HeavisideTheta[x] /. HeavisideTheta[0|0.]->0;
+sm[(0|0.), (0|0.)] := 0;
+sm[fd[(0|0.), _Association], (0|0.)] := 0;
+sm[x_, (0|0.)] := x HeavisideTheta[x] /. HeavisideTheta[(0|0.)]->0;
 sm[x_, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* TODO: Remove *)
-smp[x_, \[Epsilon]_] = 1/2 Erfc[-(x / (2 Sqrt[\[Epsilon]]))];
-
+(*smp[x_, \[Epsilon]_] = 1/2 Erfc[-(x / (2 Sqrt[\[Epsilon]]))];*)
+                       
 (*vf[x_, y_, z_] := Piecewise[{{y + sm[x-y, 0.0025], x > y}, {z, x <= y}}];*)
 (*vf[x_, y_, z_] := (y + sm[x-y, $eps]) Boole[x - y] + z Boole[x <= y];*)
 (*vf[x_, y_, z_] := (y + sm[x - y, $eps]) stheta[x - y, $eps] + z stheta[y - x, $eps];*)
 
 payoffBermudan[s_, strike_] := sm[s - strike, $eps];
 
-payoffBermudanPrime[s_ /; Dimensions[s]=={}, strike_] := 
+(*payoffBermudanPrime[s_ /; Dimensions[s]=={}, strike_] := 
 	Which[s - strike == 0, 0, 
 		  $eps == 0, HeavisideTheta[s - strike], 
 		  True, smp[s - strike, $eps]];
@@ -329,6 +383,10 @@ payoffBermudanPrime[s_ /; Head[s]==fd, strike_] :=
 		  $eps == 0, HeavisideTheta[s - strike], 
 		  True, smp[s - strike, $eps]];
 payoffBermudanPrime[s_, strike_] := MapThread[payoffBermudanPrime[#1, #2] &, {s - strike, ConstantArray[0, Dimensions[s]]}, Length[Dimensions[s]]];
+*)
+
+(* Losing one term for the sake of simplicity *)
+payoffBermudanPrime[s_, strike_] := HeavisideTheta[s - strike];
 
 numeraire[ir_, t_] := Exp[ir t];
 
@@ -338,7 +396,7 @@ Output = {outBeta, outValue, outHoldValue, fcBar, volBar}
 where
 outBeta: nE x nB
 outValue: nE x nMC
-outHoldValue: ne x nMC
+outHoldValue: nE x nMC
 fcBar: nE
 volBar: nE
 
@@ -533,11 +591,12 @@ backwardLoopValues[exerciseValue_, numeraire_, phi_] :=
         (* Use inverse *)
         (*outA[[day]] = Inverse[Outer[seqsum[#1 #2] &, aux, aux, 1, 1]];*)  (* nB x nB *)
         (* Don't use inverse *)
-        outA[[day]] = 1 / nMC Outer[seqsum[#1 #2] &, aux, aux, 1, 1]; (* nB x nB *)
+        outA[[day]] = 1 / nMC Outer[Total[#1 #2] &, aux, aux, 1, 1]; (* nB x nB *) (* seqsum *)
+        
 
         (*outB[[day]] = 1 / nMC seqsum[numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal #] & /@ aux; *)(* nB *)
-        outB[[day]] = 1 / nMC seqsum[Transpose[numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal # & /@ aux]]; (* nB *)
-
+        outB[[day]] = 1 / nMC Total[Transpose[numeraire[[day, All]] / numeraire[[day + 1, All]] valuesFinal # & /@ aux]]; (* nB *) (* seqsum *)
+        
         (* Change to `seqsum` if increasing nB *)
         (*beta = Dot[outAm1[[day]], outB[[day]]]; (* nB *)*)
 
@@ -549,7 +608,7 @@ backwardLoopValues[exerciseValue_, numeraire_, phi_] :=
         outBeta[[day]] = beta;
         (* Change to `seqsum` if increasing nB *)
         (*h = Dot[beta, phi[[All, All, day]]]; (* nMC *)*)
-        h = seqsum[beta phi[[All, All, day]]]; (* nMC *)
+        h = Total[beta phi[[All, All, day]]]; (* nMC *) (* seqsum *)
 
         outHoldValue[[day]] = h;
         (*valuesFinal = MapThread[vf[#1, #2, #3] &,
@@ -617,9 +676,9 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
           eBar[[day]] += vBar[[day]] aux;
           hBar[[day]] += vBar[[day]] (1 - aux);*)
 
-        betaBar[[day]] += seqsum[hBar[[day]] #] & /@ phi[[All, All, day]]; (* nB *)
+        betaBar[[day]] += Total[hBar[[day]] #] & /@ phi[[All, All, day]]; (* nB *) (* seqsum *)
         (*betaBar[[day]] = betaBar[[day]][[All, 1]];*)
-        xBar[[day]] += hBar[[day]] seqsum[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* nMC *)
+        xBar[[day]] += hBar[[day]] Total[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* nMC *) (* seqsum *)
 
         (* Use inverse *)
         (*aux = seqsum[betaBar[[day]] #] & /@ Transpose[outAm1[[day]]];*)
@@ -630,13 +689,13 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
         bBar[[day]] += LinearSolve[outA[[day]], betaBar[[day]]];
         aBar[[day]] += -Outer[#1 #2 &, bBar[[day]], outBeta[[day]]]; (* nB x nB *)
 
-        aux = seqsum[bBar[[day]] #] & /@ Transpose[phi[[All, All, day]]];
+        aux = Total[bBar[[day]] #] & /@ Transpose[phi[[All, All, day]]]; (* seqsum *)
         vBar[[day + 1]] += 1/ nMC numeraire[[day]] / numeraire[[day + 1]] aux;
-        xua = seqsum[bBar[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]];
+        xua = Total[bBar[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* seqsum *) 
         xBar[[day]] += 1 / nMC numeraire[[day]] / numeraire[[day + 1]] outValue[[day + 1]] xua;
 
-        xBar[[day]] += -1 / nMC (xua (seqsum[outBeta[[day]] #] & /@ Transpose[phi[[All, All, day]]]) +
-            aux (seqsum[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]));
+        xBar[[day]] += -1 / nMC (xua (Total[outBeta[[day]] #] & /@ Transpose[phi[[All, All, day]]]) + (* seqsum *)
+            aux (Total[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]])); (* seqsum *)
         (*aux = Outer[#1 #2 &, phiPrime[[All, All, day]], phi[[All, All, day]], 1, 1] +*)
             (*Outer[#1 #2 &, phi[[All, All, day]], phiPrime[[All, All, day]], 1, 1];*)
         (*aux = aBar[[day]] aux;*)
@@ -644,8 +703,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
         (*xBar[[day]] += aux;*)
         (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
         xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
-        fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
-        volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
+        fcBar[[day]] += Total[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC; (* seqsum *)
+        volBar[[day]] += Sqrt[exerciseDates[[day]]] Total[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC; (* seqsum *)
         day = day + 1
       ];
 
@@ -666,8 +725,8 @@ backwardLoopSensitivities[exerciseValue_, strike_, numeraire_, outHoldValue_, ph
 
       (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
       xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
-      fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
-      volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
+      fcBar[[day]] += Total[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC; (* seqsum *)
+      volBar[[day]] += Sqrt[exerciseDates[[day]]] Total[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC; (* seqsum *)
 
       {fcBar, volBar, vBar, hBar, eBar, xBar, spot}
 
@@ -704,30 +763,30 @@ backwardLoopSensitivitiesNew[exerciseValue_, strike_, numeraire_, outHoldValue_,
 
       xBar = eBar payoffBermudanPrime[Transpose[spot], strike];
 
-      betaBar = Transpose[seqsum[Transpose[hBar[[1;;nE-1]]] #] & /@ phi[[All, All, 1;;nE-1]]];
+      betaBar = Transpose[Total[Transpose[hBar[[1;;nE-1]]] #] & /@ phi[[All, All, 1;;nE-1]]]; (* seqsum *)
 
-      aux = Transpose[seqsum[Transpose[betaBar #]]  & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]];
+      aux = Transpose[Total[Transpose[betaBar #]]  & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]]; (* seqsum *)
       xBar[[1;;nE-1]] = xBar[[1;;nE-1]] + aux;
 
       aux = LinearSolve[Sequence @@ # ] & /@ Transpose[{outA, betaBar}];
       aBar = -Outer[#1 #2 &, aux, outBeta, 1, 1];
       bBar = aux;
 
-      aux = Transpose[seqsum[Transpose[bBar #]] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]];
-      xua = Transpose[seqsum[Transpose[bBar #]] & /@ Transpose[phi[[All, All, 1;;nE-1]], {3, 1, 2}]];
+      aux = Transpose[Total[Transpose[bBar #]] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]]; (* seqsum *)
+      xua = Transpose[Total[Transpose[bBar #]] & /@ Transpose[phi[[All, All, 1;;nE-1]], {3, 1, 2}]]; (* seqsum *)
 
       xBar[[1;;nE-1]] = xBar[[1;;nE-1]] +
-          (-1 / nMC) (aux Transpose[seqsum[Transpose[outBeta #]] & /@ Transpose[phi[[All, All, 1;;nE-1]], {3, 1, 2}]] +
-              xua * Transpose[seqsum[Transpose[outBeta #]] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]]);
+          (-1 / nMC) (aux Transpose[Total[Transpose[outBeta #]] & /@ Transpose[phi[[All, All, 1;;nE-1]], {3, 1, 2}]] + (* seqsum *)
+              xua * Transpose[Total[Transpose[outBeta #]] & /@ Transpose[phiPrime[[All, All, 1;;nE-1]], {3, 1, 2}]]); (* seqsum *)
 
       xBar[[1;;nE-1]] = xBar[[1;;nE-1]] + 1 / nMC numeraire[[1;;nE-1]] / numeraire[[2;;nE]] outValue[[2;;nE]] aux;
 
       vBar[[2;;nE]] = vBar[[2;;nE]] + 1 / nMC numeraire[[1;;nE-1]] / numeraire[[2;;nE]] xua;
 
-      fcBar = seqsum[#] & /@ (xBar Transpose[spot] / forward);
+      fcBar = Total[#] & /@ (xBar Transpose[spot] / forward); (* seqsum *)
 
-      volBar = -terminalvols exerciseDates (seqsum[#] & /@ (xBar Transpose[spot])) +
-          Sqrt[exerciseDates] (seqsum[#] & /@ (xBar Transpose[spot rvs]));
+      volBar = -terminalvols exerciseDates (Total[#] & /@ (xBar Transpose[spot])) + (* seqsum *)
+          Sqrt[exerciseDates] (Total[#] & /@ (xBar Transpose[spot rvs])); (* seqsum *)
 
 
 
@@ -750,9 +809,9 @@ backwardLoopSensitivitiesNew[exerciseValue_, strike_, numeraire_, outHoldValue_,
           eBar[[day]] += vBar[[day]] aux;
           hBar[[day]] += vBar[[day]] (1 - aux);*)
 
-        betaBar[[day]] += seqsum[hBar[[day]] #] & /@ phi[[All, All, day]]; (* nB *)
+        betaBar[[day]] += Total[hBar[[day]] #] & /@ phi[[All, All, day]]; (* nB *) (* seqsum *)
         (*betaBar[[day]] = betaBar[[day]][[All, 1]];*)
-        xBar[[day]] += hBar[[day]] seqsum[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* nMC *)
+        xBar[[day]] += hBar[[day]] Total[outBeta[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* nMC *) (* seqsum *)
 
         (* Use inverse *)
         (*aux = seqsum[betaBar[[day]] #] & /@ Transpose[outAm1[[day]]];*)
@@ -764,19 +823,19 @@ backwardLoopSensitivitiesNew[exerciseValue_, strike_, numeraire_, outHoldValue_,
         aBar[[day]] += -Outer[#1 #2 &, bBar[[day]], outBeta[[day]]]; (* nB x nB *)
 
 
-        aux = seqsum[bBar[[day]] #] & /@ Transpose[phi[[All, All, day]]];
+        aux = Total[bBar[[day]] #] & /@ Transpose[phi[[All, All, day]]]; (* seqsum *)
         vBar[[day + 1]] += numeraire[[day]] / numeraire[[day + 1]] aux;
-        aux = seqsum[bBar[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]];
+        aux = Total[bBar[[day]] #] & /@ Transpose[phiPrime[[All, All, day]]]; (* seqsum *)
         xBar[[day]] += numeraire[[day]] / numeraire[[day + 1]] outValue[[day + 1]] aux;
         aux = Outer[#1 #2 &, phiPrime[[All, All, day]], phi[[All, All, day]], 1, 1] +
             Outer[#1 #2 &, phi[[All, All, day]], phiPrime[[All, All, day]], 1, 1];
         aux = aBar[[day]] aux;
-        aux = seqsum /@ Transpose[Flatten[aux, 1]];
+        aux = Total /@ Transpose[Flatten[aux, 1]]; (* seqsum *) 
         xBar[[day]] += aux;
         (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
         xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
-        fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
-        volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
+        fcBar[[day]] += Total[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC; (* seqsum *) 
+        volBar[[day]] += Sqrt[exerciseDates[[day]]] Total[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC; (* seqsum *)
         day = day + 1
       ];
 
@@ -796,8 +855,8 @@ backwardLoopSensitivitiesNew[exerciseValue_, strike_, numeraire_, outHoldValue_,
 
       (*xBar[[day]] += eBar[[day]] Derivative[1, 0][payoffBermudan][spot[[All, day]], strike];*)
       xBar[[day]] += eBar[[day]] payoffBermudanPrime[spot[[All, day]], strike];
-      fcBar[[day]] += seqsum[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC;
-      volBar[[day]] += Sqrt[exerciseDates[[day]]] seqsum[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC;
+      fcBar[[day]] += Total[xBar[[day]] spot[[All, day]]] / forward[[day]] / nMC; (* seqsum *)
+      volBar[[day]] += Sqrt[exerciseDates[[day]]] Total[xBar[[day]] spot[[All, day]] (-terminalvols[[day]] + rvs[[All, day]])] / nMC; (* seqsum *)
 
       {fcBar, volBar, vBar, hBar, eBar, xBar, spot}
 
