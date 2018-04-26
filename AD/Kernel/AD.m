@@ -84,6 +84,8 @@ calcSensitivity::usage="";
 calcSensitivityOneVariable::usage="";
 
 $NumericFunction::usage="List of symbols with attribute NumericFunction";
+phi1::usage=""
+phi2::usage=""
 
 Begin["`Private`"];
 (* Implementation of the package *)
@@ -163,6 +165,10 @@ traceView4[expr_] :=
 SetAttributes[traceView4, {HoldAllComplete}];
 
 (*SetAttributes[smp, NumericFunction];*)
+phi1[x_] = CDF[NormalDistribution[0, 1], x]
+phi2[x_, y_] = CDF[MultinormalDistribution[{0.1, -0.2}, {{0.3136, -0.175616}, {-0.175616, 0.1024}}], {x, y}]
+SetAttributes[phi1, NumericFunction]
+SetAttributes[phi2, NumericFunction]
 $NumericFunction = Select[Names["*"], MemberQ[Attributes[#], NumericFunction] &];
 
 (*
@@ -286,10 +292,7 @@ fd /: func_[arg_fd] /; MemberQ[$NumericFunction, ToString[func]] := fd[func[arg[
 fd /: func_[argsB___, arg_fd, argsA___] /; MemberQ[$NumericFunction, ToString[func]] := 
     Module[ {allArgs, allArgs1, posfd, outValue, outSens},
         allArgs = {argsB, arg, argsA};
-        allArgs1 = If[ Head[#]===fd,
-                       toValue[#],
-                       #
-                   ] & /@ allArgs;
+        allArgs1 = Replace[allArgs, w_fd -> toValue[w], {1}];
         posfd = Position[allArgs, _fd][[All, 1]];
         outValue = func[Sequence @@ allArgs1];
         outSens = Merge[propagatefd[makePartial[func, allArgs1, #], allArgs[[#, 1]], allArgs[[#, 2]]] & /@ posfd, Total];
@@ -324,7 +327,7 @@ recursiveStatistics[x_List] := Module[
 	out2 = out2 + x[[counter]]^2;
 	counter++
 	];
-	{out / length, Sqrt[out2 / length - (out / length)^2] / Sqrt[length]}
+	{out / length, Sqrt[out2 / length - (out / length)^2]}
 	];
 	
 stDev[x_?VectorQ] := Sqrt[(Mean[x^2] - Mean[x]^2) Length[x]/(Length[x] - 1)];
@@ -344,24 +347,23 @@ cSimulationSpot =
 
 $eps = 0;
 
-sdd[x_ /; Dimensions[x]=={}, 0] := 0;
-sdd[fd[(0|0.), _Association], 0] := 0;
-sdd[x_ /; Dimensions[x]!={}, 0] := ConstantArray[0, Dimensions[x]];
+sdd[x_, 0] := DiracDelta[x] /. DiracDelta[(0|0.)]->0;
+(*sdd[x_ /; Dimensions[x]=={}, 0] := 0;
+sdd[x_ /; Dimensions[x]!={}, 0] := ConstantArray[0, Dimensions[x]];*)
 sdd[x_, \[Epsilon]_] := PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
-stheta[(0|0.), 0] := 0;
-stheta[x_ /; Dimensions[x]!={} && SubsetQ[{0, 0.}, Union[Flatten[x]]], 0] := ConstantArray[0, Dimensions[x]];
-stheta[fd[(0|0.), _Association], 0] := 0;
+(*stheta[(0|0.), 0] := 0;*)
 stheta[x_, 0] := HeavisideTheta[x] /. HeavisideTheta[(0|0.)]->0;
+(*stheta[x_ /; Dimensions[x]!={} && SubsetQ[{0, 0.}, Union[Flatten[x]]], 0] := ConstantArray[0, Dimensions[x]];*)
 stheta[x_, \[Epsilon]_] := CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
 (* Next two lines implementing elementwise Max *)
 (*sm[x_, 0] /; Dimensions[x]=={} := Max[x, 0];
 sm[x_, 0] /; Dimensions[x]!={} := MapThread[Max[#1, #2]&, {x, ConstantArray[0, Dimensions[x]]}, Length[Dimensions[x]]];*)
 (* TODO: any clean way to do this ? *)
-(*sm[0|0., eps_] := 0;*) (* TODO: Why ? This is wrong *)
+(*fd /: sm[x_fd, (0|0.)] := x HeavisideTheta[x] /. HeavisideTheta[(0|0.)]->0;*)
+(*fd /: sm[x_fd, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];*)
 sm[(0|0.), (0|0.)] := 0;
-sm[fd[(0|0.), _Association], (0|0.)] := 0;
 sm[x_, (0|0.)] := x HeavisideTheta[x] /. HeavisideTheta[(0|0.)]->0;
 sm[x_, \[Epsilon]_] := 2 \[Epsilon] PDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x] + x CDF[NormalDistribution[0, Sqrt[2 \[Epsilon]]], x];
 
