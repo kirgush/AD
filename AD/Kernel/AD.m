@@ -4,7 +4,7 @@
 
 (* Created by the Wolfram Workbench 14-Dec-2016 *)
 
-BeginPackage["AD`"];
+BeginPackage["AD`", {"NumericalDifferentialEquationAnalysis`"}];
 (* Exported symbols added here with SymbolName::usage *) 
 
 traceView2::usage="";
@@ -58,6 +58,10 @@ simulationSpot::usage="simulationSpot[fc, termVol, rvs] returns simulations of s
    and have dimensions {nS, nC}.
    
    ";
+
+smallPhi::usage
+pdfMultiNormalDistribution::usage
+bigPhi::usage
 
 vf::usage="Update values based on exercise value and continuation value.";
 
@@ -165,10 +169,39 @@ traceView4[expr_] :=
 SetAttributes[traceView4, {HoldAllComplete}];
 
 (*SetAttributes[smp, NumericFunction];*)
-phi1[x_] = CDF[NormalDistribution[0, 1], x]
-phi2[x_, y_] = CDF[MultinormalDistribution[{0.1, -0.2}, {{0.3136, -0.175616}, {-0.175616, 0.1024}}], {x, y}]
+(*phi1[mean_, stdev_, x_] = CDF[NormalDistribution[mean, stdev], x]
+phi2[mu1_, mu2_, vol1_, vol2_, x_, y_] = CDF[MultinormalDistribution[{0.1, -0.2}, {{0.3136, -0.175616}, {-0.175616, 0.1024}}], {x, y}]
 SetAttributes[phi1, NumericFunction]
-SetAttributes[phi2, NumericFunction]
+SetAttributes[phi2, NumericFunction]*)
+
+pdfMultiNormalDistribution[corrMat_, x_] := 1 / ((2 Pi)^(Length[corrMat] / 2) Sqrt[Det[corrMat]]) Exp[-1/2 Dot[x, Dot[Inverse[corrMat], x]]];
+SetAttributes[pdfMultiNormalDistribution, Union[Attributes[pdfMultiNormalDistribution], {NumericFunction}]];
+
+smallPhi[mean_, covMat_, x_] := 
+	Module[{vols, corrMat}, 
+		vols = Sqrt[Diagonal[covMat]];
+		corrMat = covMat / Outer[#1 #2 &, vols, vols, 1, 1]; 
+		pdfMultiNormalDistribution[corrMat, (x - mean) / vols]
+	];
+SetAttributes[smallPhi, Union[Attributes[smallPhi], {NumericFunction}]];
+
+(*$GQPW = GaussianQuadratureWeights[256, -5, 5];*)
+
+bigPhi[mean_, covMat_, x_] :=
+    Module[ {vars, vols, corrMat, $GQPW, gqpw, out},
+    	vars = Unique[] & /@ x;
+    	vols = Sqrt[Diagonal[covMat]];
+		corrMat = covMat / Outer[#1 #2 &, vols, vols, 1, 1];
+        (*fdIntegrate[pdfMultiNormalDistribution[corrMat, (vars - mean) / vols], Sequence @@ Transpose[{-Infinity & /@ x, vars, x}]]*)
+        (*gqpw = If[Length[vars] == 1, $GQPW, Flatten[Outer[List, Sequence@@($GQPW & /@ vars), Sequence@@(1 & /@ vars)], Length[vars] - 1]];*)
+        $GQPW = GaussianQuadratureWeights[32, -10, #] & /@ ((x - mean) / vols);
+        gqpw = Flatten[Outer[List, Sequence@@($GQPW), Sequence@@(1 & /@ vars)], Length[vars] - 1];
+        out = Total[(Times@@#[[All, 2]]) pdfMultiNormalDistribution[corrMat, #[[All, 1]]] & /@ gqpw];
+        out
+      
+    ];
+
+
 $NumericFunction = Select[Names["*"], MemberQ[Attributes[#], NumericFunction] &];
 
 (*
