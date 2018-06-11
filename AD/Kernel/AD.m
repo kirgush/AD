@@ -192,15 +192,12 @@ bigPhi[mean_, covMat_, x_] :=
     	vars = Unique[] & /@ x;
     	vols = Sqrt[Diagonal[covMat]];
 		corrMat = covMat / Outer[#1 #2 &, vols, vols, 1, 1];
-        (*fdIntegrate[pdfMultiNormalDistribution[corrMat, (vars - mean) / vols], Sequence @@ Transpose[{-Infinity & /@ x, vars, x}]]*)
-        (*gqpw = If[Length[vars] == 1, $GQPW, Flatten[Outer[List, Sequence@@($GQPW & /@ vars), Sequence@@(1 & /@ vars)], Length[vars] - 1]];*)
-        $GQPW = GaussianQuadratureWeights[32, -10, #] & /@ ((x - mean) / vols);
+        $GQPW = GaussianQuadratureWeights[64, -10, #] & /@ ((x - mean) / vols);
         gqpw = Flatten[Outer[List, Sequence@@($GQPW), Sequence@@(1 & /@ vars)], Length[vars] - 1];
         out = Total[(Times@@#[[All, 2]]) pdfMultiNormalDistribution[corrMat, #[[All, 1]]] & /@ gqpw];
         out
-      
     ];
-
+SetAttributes[bigPhi, Union[Attributes[bigPhi], {NumericFunction}]];
 
 $NumericFunction = Select[Names["*"], MemberQ[Attributes[#], NumericFunction] &];
 
